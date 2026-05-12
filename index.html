@@ -2,805 +2,717 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GTAHUB Content Hub · Eleevate MX</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GTAHUB · Content Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/umd/lucide.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body, #root { height: 100%; }
-  body { background: #09101e; font-family: 'Poppins', sans-serif; }
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 10px; }
-  input, select, textarea, button { font-family: 'Poppins', sans-serif; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;font-family:'Poppins',sans-serif}
+body{background:#080e1c;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
+input,select,textarea,button{font-family:'Poppins',sans-serif}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(26,115,232,.35)}50%{box-shadow:0 0 40px rgba(0,212,255,.5)}}
+.page{animation:fadeUp .28s ease forwards}
+.nav-btn:hover{background:rgba(77,159,255,.12)!important;color:#4d9fff!important}
+.card-h{transition:all .18s ease;cursor:pointer}
+.card-h:hover{border-color:rgba(26,115,232,.4)!important;transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.4)!important}
+.btn-p{transition:all .18s ease}
+.btn-p:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn-p:active{transform:translateY(0)}
+.logo-g{animation:glow 3s ease-in-out infinite}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script>
-// ══════════════════════════════════════════════════════════════════════════════
-//  ⚙️  CONFIGURACIÓN — pega aquí la URL de tu Apps Script
-//     (Implementar → Nueva implementación → Aplicación web → Copiar URL)
-// ══════════════════════════════════════════════════════════════════════════════
-const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwAdPqLQyjR1VYmuIOHnxdBGirPs_W09j_ku4jMLmS_yIjRVyb9F6A8_d7kdMfp7uscxQ/exec";   // ← PEGA TU URL AQUÍ
-// Ejemplo: "https://script.google.com/macros/s/AKfycby.../exec"
-// Si está vacío la app funciona con datos de ejemplo (modo demo).
-// ══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  ⚙️  GOOGLE SHEETS URL — pega aquí la URL de tu Apps Script
+// ═══════════════════════════════════════════════════════════
+const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwAdPqLQyjR1VYmuIOHnxdBGirPs_W09j_ku4jMLmS_yIjRVyb9F6A8_d7kdMfp7uscxQ/exec";
+// ═══════════════════════════════════════════════════════════
 
-const { useState, useEffect, useCallback } = React;
-const {
-  LayoutDashboard, Calendar, FileText, Target, Megaphone,
-  CheckCircle, XCircle, Clock, Eye, Plus, LogOut, Heart,
-  MessageCircle, Bookmark, Send, MoreHorizontal, TrendingUp,
-  DollarSign, X, ChevronRight, Film, Camera, Play,
-  Layers, ArrowLeft, Zap, Shield, BarChart2, AlertCircle,
-  Radio, Star, Loader
-} = lucide;
+const { useState, useEffect } = React;
 
-// ── THEME ──────────────────────────────────────────────────────────────────
+// ── SAFE ICON LOADER ──────────────────────────────────────
+// Evita crash si algún icono no existe en esta versión de Lucide
+function makeIcon(name, fallback) {
+  return lucide[name] || lucide[fallback] || lucide['Circle'] || function(){
+    return React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},
+      React.createElement('circle',{cx:12,cy:12,r:9}));
+  };
+}
+const IC = {
+  Dashboard:    makeIcon('LayoutDashboard','Columns'),
+  Calendar:     makeIcon('Calendar'),
+  FileText:     makeIcon('FileText'),
+  Target:       makeIcon('Target','Circle'),
+  Megaphone:    makeIcon('Megaphone','Bell'),
+  CheckCircle:  makeIcon('CheckCircle'),
+  XCircle:      makeIcon('XCircle'),
+  Clock:        makeIcon('Clock'),
+  Eye:          makeIcon('Eye'),
+  Plus:         makeIcon('Plus'),
+  LogOut:       makeIcon('LogOut'),
+  Heart:        makeIcon('Heart'),
+  MessageCircle:makeIcon('MessageCircle'),
+  Bookmark:     makeIcon('Bookmark'),
+  Send:         makeIcon('Send'),
+  MoreH:        makeIcon('MoreHorizontal','MoreVertical'),
+  TrendingUp:   makeIcon('TrendingUp','ArrowUp'),
+  DollarSign:   makeIcon('DollarSign'),
+  X:            makeIcon('X'),
+  ChevronRight: makeIcon('ChevronRight'),
+  Film:         makeIcon('Film'),
+  Camera:       makeIcon('Camera'),
+  Play:         makeIcon('Play'),
+  Layers:       makeIcon('Layers'),
+  ArrowLeft:    makeIcon('ArrowLeft'),
+  Zap:          makeIcon('Zap'),
+  Shield:       makeIcon('Shield'),
+  BarChart2:    makeIcon('BarChart2','BarChart'),
+  AlertCircle:  makeIcon('AlertCircle','Alert'),
+  Radio:        makeIcon('Radio','Wifi'),
+  Star:         makeIcon('Star','Award'),
+  Award:        makeIcon('Award','Star'),
+  Activity:     makeIcon('Activity','TrendingUp'),
+  Bell:         makeIcon('Bell'),
+};
+
+// ── THEME ─────────────────────────────────────────────────
 const C = {
-  bg:'#09101e', bg2:'#0e1525', bg3:'#141e32', bg4:'#1a243d',
+  bg:'#080e1c', bg2:'#0c1423', bg3:'#111b2e', bg4:'#172036', card:'#0f1928',
   blue:'#1a73e8', blueB:'#4d9fff', cyan:'#00d4ff',
   gold:'#f4c542', red:'#ff3b5c', green:'#00e676', eGrn:'#22b14c',
   purple:'#a855f7', pink:'#ff6eb4',
-  ink:'#f0f4ff', dim:'#8a96b0', mute:'#4a5568',
-  line:'rgba(240,244,255,0.07)', lineM:'rgba(240,244,255,0.14)',
+  ink:'#eef2ff', dim:'#6b7a99', mute:'#2d3a52',
+  line:'rgba(255,255,255,0.05)', lineM:'rgba(255,255,255,0.1)',
 };
 
-// ── USUARIOS ───────────────────────────────────────────────────────────────
+// ── USUARIOS ──────────────────────────────────────────────
 const USERS = [
-  { id:1, name:'FergunsonTV', role:'admin', av:'FG', color:C.blue,   email:'fergunson@gtahub.mx', tag:'@FergunsonTV', emoji:'📺' },
-  { id:2, name:'Volter',      role:'admin', av:'VL', color:C.gold,   email:'volter@gtahub.mx',   tag:'@Volter',      emoji:'⚡' },
-  { id:3, name:'Kevinagre',   role:'admin', av:'KA', color:C.eGrn,   email:'kevinagre@gtahub.mx',tag:'@Kevinagre',   emoji:'🎮' },
-  { id:4, name:'MeDed',       role:'mkt',   av:'MD', color:C.purple, email:'meded@gtahub.mx',    tag:'@MeDed',       emoji:'🎯' },
-  { id:5, name:'E.Yaaami',    role:'mkt',   av:'EY', color:C.pink,   email:'yaaami@gtahub.mx',   tag:'@E.Yaaami',    emoji:'✨' },
+  {id:1,name:'FergunsonTV',role:'admin',av:'FG',color:C.blue,  email:'fergunson@gtahub.mx',tag:'@FergunsonTV',emoji:'📺'},
+  {id:2,name:'Volter',     role:'admin',av:'VL',color:C.gold,  email:'volter@gtahub.mx',   tag:'@Volter',     emoji:'⚡'},
+  {id:3,name:'Kevinagre',  role:'admin',av:'KA',color:C.eGrn,  email:'kevinagre@gtahub.mx',tag:'@Kevinagre',  emoji:'🎮'},
+  {id:4,name:'MeDed',      role:'mkt',  av:'MD',color:C.purple,email:'meded@gtahub.mx',    tag:'@MeDed',      emoji:'🎯'},
+  {id:5,name:'E.Yaaami',   role:'mkt',  av:'EY',color:C.pink,  email:'yaaami@gtahub.mx',   tag:'@E.Yaaami',   emoji:'✨'},
 ];
-
 const ROLE_CFG = {
-  admin: { label:'Admin / Staff',  color:C.gold,   Icon:Shield, bg:`${C.gold}15`,   border:`${C.gold}33` },
-  mkt:   { label:'Usuario de MKT', color:C.purple, Icon:Star,   bg:`${C.purple}15`, border:`${C.purple}33` },
+  admin:{label:'Admin / Staff',  color:C.gold,   Icon:IC.Shield, bg:`${C.gold}18`,   border:`${C.gold}30`},
+  mkt:  {label:'Usuario de MKT', color:C.purple, Icon:IC.Star,   bg:`${C.purple}18`, border:`${C.purple}30`},
 };
-
 const DAYS  = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const WEEKS = ['Semana 1','Semana 2','Semana 3','Semana 4'];
 
-// ── MOCK DATA (modo demo) ──────────────────────────────────────────────────
-const MOCK_PROPOSALS = [
-  { id:1, title:'Reel: Top 5 misiones épicas', type:'reel', author:'MeDed', av:'MD', acColor:C.purple, status:'pending',
-    week:'Semana 1', day:'Lunes', time:'18:00',
-    caption:'¿Cuál fue tu misión favorita? 🎮\n¡Comenta y gana HUBCoins! 👇\n\n#GTAHUB #GTA5 #Gaming',
-    img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',
-    hashtags:['#GTAHUB','#GTA5','#Gaming','#MX'], cta:'Únete → link en bio',
-    target:'Gamers 18–28, México', platform:'Instagram Reels', date:'15 May 2026', notes:'', reach:'12,000–18,000', budget:null },
-  { id:2, title:'Post: Evento Robbery ×2', type:'post', author:'E.Yaaami', av:'EY', acColor:C.pink, status:'approved',
-    week:'Semana 1', day:'Miércoles', time:'20:00',
-    caption:'🚨 EVENTO ESPECIAL HOY 🚨\nRobbery ×2 toda la noche\n⏰ 8pm – 12am CST',
-    img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=500&fit=crop',
-    hashtags:['#GTAHUB','#Evento','#GTA'], cta:'Actívate en el servidor',
-    target:'Comunidad activa 16–35', platform:'Instagram + Stories', date:'14 May 2026', notes:'Aprobado por Volter ✓', reach:'8,000–12,000', budget:null },
-  { id:3, title:'Story: Poll ¿Tu rol favorito?', type:'story', author:'MeDed', av:'MD', acColor:C.purple, status:'review',
-    week:'Semana 1', day:'Viernes', time:'14:00',
-    caption:'¿Cuál es tu rol favorito en GTAHUB? Vota 👆',
-    img:'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=500&fit=crop',
-    hashtags:['#GTAHUB','#Poll'], cta:'Vota en la story',
-    target:'Toda la comunidad', platform:'Instagram Stories', date:'16 May 2026', notes:'Ajustar diseño del poll.', reach:'6,000–10,000', budget:null },
-  { id:4, title:'Video: Highlight del streamer', type:'video', author:'E.Yaaami', av:'EY', acColor:C.pink, status:'rejected',
-    week:'Semana 2', day:'Martes', time:'19:00',
-    caption:'¡El momento del siglo en GTAHUB! 🔥',
-    img:'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=500&fit=crop',
-    hashtags:['#GTAHUB','#Clip'], cta:'Síguenos para más clips',
-    target:'Fans streamers', platform:'Instagram Reels', date:'20 May 2026', notes:'Re-grabar en 1080p mínimo.', reach:'15,000–25,000', budget:null },
-  { id:5, title:'Carrusel: Guía de roles', type:'carousel', author:'MeDed', av:'MD', acColor:C.purple, status:'pending',
-    week:'Semana 2', day:'Jueves', time:'12:00',
-    caption:'Conoce todos los roles 📋\nDesliza →',
-    img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=500&fit=crop',
-    hashtags:['#GTAHUB','#Guía','#Roleplay'], cta:'Regístrate - link en bio',
-    target:'Nuevos jugadores 16–25', platform:'Instagram Carrusel', date:'22 May 2026', notes:'', reach:'20,000–35,000', budget:500 },
+const MOCK = [
+  {id:1,title:'Reel: Top 5 misiones épicas',type:'reel',author:'MeDed',av:'MD',acColor:C.purple,status:'pending',
+   week:'Semana 1',day:'Lunes',time:'18:00',caption:'¿Cuál fue tu misión favorita? 🎮\n¡Comenta y gana HUBCoins! 👇\n\n#GTAHUB #GTA5 #Gaming',
+   img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',
+   hashtags:['#GTAHUB','#GTA5','#Gaming','#MX'],cta:'Únete → link en bio',target:'Gamers 18–28, México',platform:'Instagram Reels',date:'15 May 2026',notes:'',reach:'12,000–18,000',budget:null},
+  {id:2,title:'Post: Evento Robbery ×2',type:'post',author:'E.Yaaami',av:'EY',acColor:C.pink,status:'approved',
+   week:'Semana 1',day:'Miércoles',time:'20:00',caption:'🚨 EVENTO ESPECIAL HOY 🚨\nRobbery ×2 toda la noche\n⏰ 8pm – 12am CST',
+   img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=500&fit=crop',
+   hashtags:['#GTAHUB','#Evento','#GTA'],cta:'Actívate en el servidor',target:'Comunidad 16–35',platform:'Instagram + Stories',date:'14 May 2026',notes:'Aprobado por Volter ✓',reach:'8,000–12,000',budget:null},
+  {id:3,title:'Story: Poll ¿Tu rol favorito?',type:'story',author:'MeDed',av:'MD',acColor:C.purple,status:'review',
+   week:'Semana 1',day:'Viernes',time:'14:00',caption:'¿Cuál es tu rol favorito en GTAHUB? Vota 👆',
+   img:'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=500&fit=crop',
+   hashtags:['#GTAHUB','#Poll'],cta:'Vota en la story',target:'Toda la comunidad',platform:'Instagram Stories',date:'16 May 2026',notes:'Ajustar diseño del poll.',reach:'6,000–10,000',budget:null},
+  {id:4,title:'Video: Highlight del streamer',type:'video',author:'E.Yaaami',av:'EY',acColor:C.pink,status:'rejected',
+   week:'Semana 2',day:'Martes',time:'19:00',caption:'¡El momento del siglo en GTAHUB! 🔥',
+   img:'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=500&fit=crop',
+   hashtags:['#GTAHUB','#Clip'],cta:'Síguenos para más clips',target:'Fans streamers',platform:'Instagram Reels',date:'20 May 2026',notes:'Re-grabar en 1080p mínimo.',reach:'15,000–25,000',budget:null},
+  {id:5,title:'Carrusel: Guía de roles',type:'carousel',author:'MeDed',av:'MD',acColor:C.purple,status:'pending',
+   week:'Semana 2',day:'Jueves',time:'12:00',caption:'Conoce todos los roles 📋\nDesliza para ver más →',
+   img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=500&fit=crop',
+   hashtags:['#GTAHUB','#Guía','#Roleplay'],cta:'Regístrate - link en bio',target:'Nuevos jugadores 16–25',platform:'Instagram Carrusel',date:'22 May 2026',notes:'',reach:'20,000–35,000',budget:500},
 ];
-
 const TARGETS = [
-  { id:1, name:'Gamers MX Core',    age:'18–28', gender:'70% M / 30% F', interests:['GTA Online','Roleplay','Twitch','Discord'],    location:'CDMX, MTY, GDL', size:'180K', platform:'Instagram + TikTok', color:C.blueB },
-  { id:2, name:'Comunidad Activa',  age:'16–35', gender:'65% M / 35% F', interests:['Gaming','Comunidades','Servidores RP'],         location:'México Nacional', size:'320K', platform:'Instagram + FB',    color:C.eGrn },
-  { id:3, name:'Fans Streamers',    age:'15–25', gender:'55% M / 45% F', interests:['Twitch','YouTube Gaming','Clips'],              location:'LATAM',           size:'500K', platform:'TikTok + Reels',    color:C.purple },
-  { id:4, name:'Jugadores Nuevos',  age:'16–22', gender:'60% M / 40% F', interests:['GTA','Juegos Online','Roleplay'],               location:'México',          size:'90K',  platform:'TikTok + Reels',    color:C.gold },
+  {id:1,name:'Gamers MX Core',  age:'18–28',gender:'70% M / 30% F',interests:['GTA Online','Roleplay','Twitch','Discord'],   location:'CDMX, MTY, GDL',size:'180K',platform:'Instagram + TikTok',color:C.blueB},
+  {id:2,name:'Comunidad Activa',age:'16–35',gender:'65% M / 35% F',interests:['Gaming','Comunidades','Servidores RP'],        location:'México Nacional', size:'320K',platform:'Instagram + FB',  color:C.eGrn},
+  {id:3,name:'Fans Streamers',  age:'15–25',gender:'55% M / 45% F',interests:['Twitch','YouTube Gaming','Clips'],             location:'LATAM',           size:'500K',platform:'TikTok + Reels', color:C.purple},
+  {id:4,name:'Jugadores Nuevos',age:'16–22',gender:'60% M / 40% F',interests:['GTA','Juegos Online','Roleplay'],              location:'México',          size:'90K', platform:'TikTok + Reels', color:C.gold},
 ];
-
 const CAMPAIGNS = [
-  { id:1, name:'Lanzamiento Semana 1', budget:2500, spent:1840, platform:'Instagram',        status:'active',    reach:'42,000',  startDate:'May 13', endDate:'May 19', color:C.blueB },
-  { id:2, name:'Evento Robbery ×2',    budget:800,  spent:800,  platform:'Instagram Stories',status:'completed', reach:'15,000',  startDate:'May 14', endDate:'May 14', color:C.eGrn },
-  { id:3, name:'Captación Roleplay',   budget:3000, spent:0,    platform:'TikTok + Reels',   status:'scheduled', reach:'80,000+', startDate:'May 20', endDate:'May 26', color:C.purple },
+  {id:1,name:'Lanzamiento Semana 1',budget:2500,spent:1840,platform:'Instagram',        status:'active',    reach:'42,000', startDate:'May 13',endDate:'May 19',color:C.blueB},
+  {id:2,name:'Evento Robbery ×2',   budget:800, spent:800, platform:'Instagram Stories',status:'completed', reach:'15,000', startDate:'May 14',endDate:'May 14',color:C.eGrn},
+  {id:3,name:'Captación Roleplay',  budget:3000,spent:0,   platform:'TikTok + Reels',   status:'scheduled', reach:'80,000+',startDate:'May 20',endDate:'May 26',color:C.purple},
 ];
-
-// ── STATUS / TYPE MAPS ─────────────────────────────────────────────────────
 const STATUS = {
-  pending:  { label:'Pendiente',   color:C.cyan,  bg:`rgba(0,212,255,.1)`,  Icon:Clock },
-  approved: { label:'Aprobado',    color:C.green, bg:`rgba(0,230,118,.1)`,  Icon:CheckCircle },
-  review:   { label:'En Revisión', color:C.gold,  bg:`rgba(244,197,66,.1)`, Icon:Eye },
-  rejected: { label:'Rechazado',   color:C.red,   bg:`rgba(255,59,92,.1)`,  Icon:XCircle },
+  pending: {label:'Pendiente',  color:C.cyan,  bg:`rgba(0,212,255,.12)`, Icon:IC.Clock},
+  approved:{label:'Aprobado',   color:C.green, bg:`rgba(0,230,118,.12)`, Icon:IC.CheckCircle},
+  review:  {label:'En Revisión',color:C.gold,  bg:`rgba(244,197,66,.12)`,Icon:IC.Eye},
+  rejected:{label:'Rechazado',  color:C.red,   bg:`rgba(255,59,92,.12)`, Icon:IC.XCircle},
 };
 const TYPE = {
-  reel:     { label:'Reel',     color:C.purple, Icon:Film },
-  post:     { label:'Post',     color:C.blueB,  Icon:Camera },
-  story:    { label:'Story',    color:C.red,    Icon:Radio },
-  video:    { label:'Video',    color:C.gold,   Icon:Play },
-  carousel: { label:'Carrusel', color:C.eGrn,  Icon:Layers },
+  reel:    {label:'Reel',    color:C.purple,Icon:IC.Film},
+  post:    {label:'Post',    color:C.blueB, Icon:IC.Camera},
+  story:   {label:'Story',   color:C.red,   Icon:IC.Radio},
+  video:   {label:'Video',   color:C.gold,  Icon:IC.Play},
+  carousel:{label:'Carrusel',color:C.eGrn, Icon:IC.Layers},
 };
 
-// ── SHEETS API ─────────────────────────────────────────────────────────────
+// ── API ───────────────────────────────────────────────────
 const api = {
-  async get() {
-    if (!SHEETS_API_URL) return MOCK_PROPOSALS;
-    const res  = await fetch(SHEETS_API_URL + "?action=getProposals");
-    const data = await res.json();
-    return data.proposals || [];
+  async get(){
+    if(!SHEETS_API_URL) return MOCK;
+    try{const r=await fetch(SHEETS_API_URL+'?action=getProposals');const d=await r.json();return d.proposals||[];}catch{return MOCK;}
   },
-  async add(proposal) {
-    if (!SHEETS_API_URL) return { id: Date.now() };
-    const res  = await fetch(SHEETS_API_URL, { method:'POST',
-      body: JSON.stringify({ action:'addProposal', proposal }) });
-    return res.json();
+  async add(p){
+    if(!SHEETS_API_URL) return{id:Date.now()};
+    try{const r=await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'addProposal',proposal:p})});return r.json();}catch{return{id:Date.now()};}
   },
-  async updateStatus(id, status, notes) {
-    if (!SHEETS_API_URL) return { success: true };
-    const res = await fetch(SHEETS_API_URL, { method:'POST',
-      body: JSON.stringify({ action:'updateStatus', id, status, notes }) });
-    return res.json();
+  async update(id,status,notes){
+    if(!SHEETS_API_URL) return{success:true};
+    try{const r=await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'updateStatus',id,status,notes})});return r.json();}catch{return{success:true};}
   },
 };
 
-// ── LAYOUT HELPERS ─────────────────────────────────────────────────────────
-const row = (x={}) => ({ display:'flex', alignItems:'center', ...x });
-const col = (x={}) => ({ display:'flex', flexDirection:'column', ...x });
+// ── LAYOUT UTILS ──────────────────────────────────────────
+const r=(x={})=>({display:'flex',alignItems:'center',...x});
+const c=(x={})=>({display:'flex',flexDirection:'column',...x});
+const e=React.createElement;
 
-// ── SHARED UI ──────────────────────────────────────────────────────────────
-function Avatar({ initials, size=36, color=C.blue }) {
-  return React.createElement('div', { style:{ width:size, height:size, borderRadius:'50%', flexShrink:0,
-    background:`linear-gradient(135deg,${color},${color}88)`,
-    display:'flex', alignItems:'center', justifyContent:'center',
-    fontSize:size*.33, fontWeight:800, color:'#fff' }}, initials);
+// ── SHARED COMPONENTS ─────────────────────────────────────
+function Avatar({initials,size=36,color=C.blue,glow=false}){
+  return e('div',{style:{width:size,height:size,borderRadius:'50%',flexShrink:0,
+    background:`linear-gradient(135deg,${color}ee,${color}66)`,
+    display:'flex',alignItems:'center',justifyContent:'center',
+    fontSize:size*.32,fontWeight:800,color:'#fff',letterSpacing:-.5,
+    boxShadow:glow?`0 0 20px ${color}55`:undefined}},initials);
 }
-function StatusBadge({ status }) {
-  const s = STATUS[status]||STATUS.pending;
-  return React.createElement('span', { style:{ display:'inline-flex', alignItems:'center', gap:5,
-    padding:'3px 9px', borderRadius:999, fontSize:11, fontWeight:700,
-    background:s.bg, color:s.color, border:`1px solid ${s.color}33` }},
-    React.createElement(s.Icon,{size:10}), ' ', s.label);
+function SBadge({status}){
+  const s=STATUS[status]||STATUS.pending;
+  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:5,
+    padding:'4px 10px',borderRadius:999,fontSize:11,fontWeight:700,letterSpacing:.3,
+    background:s.bg,color:s.color,border:`1px solid ${s.color}44`}},
+    e(s.Icon,{size:10}),' ',s.label);
 }
-function TypeBadge({ type }) {
-  const t = TYPE[type]||TYPE.post;
-  return React.createElement('span', { style:{ display:'inline-flex', alignItems:'center', gap:4,
-    padding:'2px 8px', borderRadius:999, fontSize:10, fontWeight:700,
-    background:`${t.color}18`, color:t.color, border:`1px solid ${t.color}33` }},
-    React.createElement(t.Icon,{size:9}), ' ', t.label);
+function TBadge({type}){
+  const t=TYPE[type]||TYPE.post;
+  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:4,
+    padding:'3px 8px',borderRadius:999,fontSize:10,fontWeight:700,
+    background:`${t.color}15`,color:t.color,border:`1px solid ${t.color}30`}},
+    e(t.Icon,{size:9}),' ',t.label);
 }
-function Pill({ label, color=C.dim }) {
-  return React.createElement('span', { style:{ padding:'2px 7px', borderRadius:999, fontSize:10,
-    background:`${color}18`, color, border:`1px solid ${color}22`, fontWeight:600 }}, label);
+function Pill({label,color=C.dim}){
+  return e('span',{style:{padding:'3px 9px',borderRadius:999,fontSize:10,fontWeight:600,
+    background:`${color}15`,color,border:`1px solid ${color}25`}},label);
 }
-function Btn({ children, onClick, variant='default', size='md', style:ex={} }) {
-  const p = size==='sm'?'7px 14px':'10px 20px', fs = size==='sm'?12:13;
-  const v = {
-    primary:{ background:`linear-gradient(135deg,${C.blue},${C.blueB})`, color:'#fff', padding:p, fontSize:fs, boxShadow:`0 8px 25px ${C.blue}44` },
-    success:{ background:`linear-gradient(135deg,${C.eGrn},${C.green})`, color:'#fff', padding:p, fontSize:fs },
-    danger: { background:`linear-gradient(135deg,${C.red},#ff6b84)`,     color:'#fff', padding:p, fontSize:fs },
-    warning:{ background:`linear-gradient(135deg,${C.gold},#ffd980)`,    color:'#1a1000', padding:p, fontSize:fs },
-    default:{ background:C.bg3, color:C.ink, padding:p, fontSize:fs, border:`1px solid ${C.lineM}` },
+function Btn({children,onClick,v='default',sm,full,style:sx={}}){
+  const p=sm?'7px 14px':'11px 22px', fs=sm?11:13;
+  const vars={
+    primary:{background:`linear-gradient(135deg,${C.blue},${C.blueB})`,color:'#fff',boxShadow:`0 6px 20px ${C.blue}40`},
+    success:{background:`linear-gradient(135deg,${C.eGrn},${C.green})`,color:'#fff',boxShadow:`0 6px 20px ${C.eGrn}30`},
+    danger: {background:`linear-gradient(135deg,${C.red},#ff8096)`,    color:'#fff',boxShadow:`0 6px 20px ${C.red}30`},
+    warning:{background:`linear-gradient(135deg,${C.gold},#ffe080)`,   color:'#1a1000'},
+    default:{background:C.bg3,color:C.ink,border:`1px solid ${C.lineM}`},
   };
-  return React.createElement('button', { style:{ display:'inline-flex', alignItems:'center', gap:6,
-    cursor:'pointer', border:'none', borderRadius:12, fontFamily:'Poppins,sans-serif',
-    fontWeight:700, transition:'all .2s', ...(v[variant]||v.default), ...ex }, onClick }, children);
+  return e('button',{className:'btn-p',onClick,style:{
+    display:'inline-flex',alignItems:'center',gap:7,cursor:'pointer',
+    border:'none',borderRadius:12,fontWeight:700,fontSize:fs,padding:p,
+    width:full?'100%':undefined,justifyContent:full?'center':undefined,
+    ...(vars[v]||vars.default),...sx}},children);
 }
-function Card({ children, style:ex={} }) {
-  return React.createElement('div', { style:{ background:C.bg2, border:`1px solid ${C.line}`, borderRadius:18, ...ex }}, children);
+function Card({children,style:sx={},onClick,hover}){
+  return e('div',{onClick,className:hover?'card-h':undefined,style:{
+    background:C.card,border:`1px solid ${C.line}`,borderRadius:20,
+    boxShadow:'0 4px 20px rgba(0,0,0,.25)',...sx}},children);
 }
-function Stat({ label, value, color=C.cyan, icon:Icon }) {
-  return React.createElement(Card, { style:{ padding:'18px 20px', flex:1, minWidth:0 }},
-    React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:10 })},
-      React.createElement('span', { style:{ fontSize:10, color:C.dim, fontWeight:700, textTransform:'uppercase', letterSpacing:1 }}, label),
-      Icon && React.createElement('div', { style:{ width:30, height:30, borderRadius:10, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center' }},
-        React.createElement(Icon,{size:15,color}))),
-    React.createElement('div', { style:{ fontSize:26, fontWeight:900, color, letterSpacing:-1 }}, value));
+function Stat({label,value,color=C.cyan,Icon:Ico}){
+  return e(Card,{style:{padding:'20px',flex:1,minWidth:0,position:'relative',overflow:'hidden'}},
+    e('div',{style:{position:'absolute',top:-20,right:-20,width:80,height:80,borderRadius:'50%',background:`${color}08`}}),
+    e('div',{style:r({justifyContent:'space-between',marginBottom:12})},
+      e('span',{style:{fontSize:10,color:C.dim,fontWeight:700,textTransform:'uppercase',letterSpacing:1.2}},label),
+      e('div',{style:{width:32,height:32,borderRadius:10,background:`${color}18`,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${color}25`}},
+        e(Ico,{size:15,color}))),
+    e('div',{style:{fontSize:28,fontWeight:900,color,letterSpacing:-1.5}},value));
 }
-function Notif({ msg, type='success', onClose }) {
-  const c = { success:C.green, error:C.red, info:C.cyan, warning:C.gold }[type]||C.cyan;
-  return React.createElement('div', { style:{ position:'fixed', top:18, right:18, zIndex:9999,
-    background:C.bg3, border:`1px solid ${c}55`, borderRadius:14, padding:'12px 16px',
-    boxShadow:`0 8px 30px rgba(0,0,0,.6)`, display:'flex', alignItems:'center', gap:10, minWidth:260 }},
-    React.createElement('div', { style:{ width:6, height:6, borderRadius:'50%', background:c, flexShrink:0 }}),
-    React.createElement('span', { style:{ fontSize:13, fontWeight:600, color:C.ink, flex:1 }}, msg),
-    React.createElement('button', { onClick:onClose, style:{ background:'none', border:'none', cursor:'pointer', color:C.dim, display:'flex' }},
-      React.createElement(X,{size:14})));
-}
-
-// ── IG PREVIEW ─────────────────────────────────────────────────────────────
-function IGPreview({ proposal }) {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  if (!proposal) return null;
-  const isReel = proposal.type==='reel'||proposal.type==='video';
-
-  return React.createElement('div', { style:col({ alignItems:'center', gap:12 })},
-    React.createElement('div', { style:{ fontSize:10, color:C.mute, letterSpacing:2, textTransform:'uppercase', fontWeight:700 }},
-      'Preview · ', proposal.platform||'Instagram'),
-    React.createElement('div', { style:{ width:246, background:'#0a0a0a', borderRadius:38, padding:5, boxShadow:'0 40px 100px rgba(0,0,0,.8), 0 0 0 2px #2a2a2a' }},
-      React.createElement('div', { style:{ height:28, display:'flex', justifyContent:'center', alignItems:'center', paddingTop:4 }},
-        React.createElement('div', { style:{ width:76, height:24, background:'#000', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 14px' }},
-          React.createElement('span', { style:{ fontSize:8, color:'#fff', fontFamily:'monospace' }}, '9:41'),
-          React.createElement('span', { style:{ fontSize:7, color:'#fff' }}, '●●●'))),
-      React.createElement('div', { style:{ background:'#fafafa', borderRadius:28, overflow:'hidden' }},
-        React.createElement('div', { style:{ padding:'7px 10px', borderBottom:'0.5px solid #efefef', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fff' }},
-          React.createElement('div', { style:row({ gap:7 })},
-            React.createElement('div', { style:{ width:26, height:26, borderRadius:'50%', background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', padding:2, display:'flex', alignItems:'center', justifyContent:'center' }},
-              React.createElement('div', { style:{ background:'#fff', borderRadius:'50%', padding:1.5, width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }},
-                React.createElement('span', { style:{ fontSize:9, fontWeight:900, color:'#1a1a1a' }}, 'G'))),
-            React.createElement('div', null,
-              React.createElement('div', { style:{ fontSize:9.5, fontWeight:800, color:'#000', fontFamily:'sans-serif', lineHeight:1 }}, 'gtahub.mx'),
-              React.createElement('div', { style:{ fontSize:7.5, color:'#888', fontFamily:'sans-serif' }}, 'Patrocinado'))),
-          React.createElement('div', { style:row({ gap:5 })},
-            React.createElement('span', { style:{ fontSize:9, fontWeight:700, color:'#1877f2' }}, 'Seguir'),
-            React.createElement(MoreHorizontal,{size:13, color:'#000'}))),
-        React.createElement('div', { style:{ position:'relative', width:'100%', paddingBottom:proposal.type==='story'?'177%':'125%', overflow:'hidden', background:'#e0e0e0' }},
-          React.createElement('img', { src:proposal.img, alt:'', style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}),
-          isReel && React.createElement('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,.22)' }},
-            React.createElement('div', { style:{ width:40, height:40, background:'rgba(255,255,255,.9)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center' }},
-              React.createElement(Play,{size:15, color:'#000', fill:'#000'}))),
-          React.createElement('div', { style:{ position:'absolute', top:7, right:7, background:'rgba(0,0,0,.65)', borderRadius:4, padding:'2px 5px', fontSize:7, color:'#fff', fontWeight:900, letterSpacing:1 }}, 'GTAHUB')),
-        React.createElement('div', { style:{ padding:'7px 10px 4px', background:'#fff' }},
-          React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:5 })},
-            React.createElement('div', { style:row({ gap:11 })},
-              React.createElement('button', { onClick:()=>setLiked(!liked), style:{ background:'none', border:'none', cursor:'pointer', padding:0 }},
-                React.createElement(Heart,{size:17, fill:liked?'#ed4956':'none', color:liked?'#ed4956':'#262626', strokeWidth:1.5})),
-              React.createElement(MessageCircle,{size:17, color:'#262626', strokeWidth:1.5}),
-              React.createElement(Send,{size:17, color:'#262626', strokeWidth:1.5})),
-            React.createElement('button', { onClick:()=>setSaved(!saved), style:{ background:'none', border:'none', cursor:'pointer', padding:0 }},
-              React.createElement(Bookmark,{size:17, fill:saved?'#262626':'none', color:'#262626', strokeWidth:1.5}))),
-          React.createElement('div', { style:{ fontSize:9.5, fontWeight:800, color:'#000', fontFamily:'sans-serif', marginBottom:3 }}, (1247+(liked?1:0)).toLocaleString(), ' Me gusta'),
-          React.createElement('div', { style:{ fontSize:9, color:'#262626', fontFamily:'sans-serif', lineHeight:1.5 }},
-            React.createElement('span', { style:{ fontWeight:800 }}, 'gtahub.mx'), ' ',
-            proposal.caption.split('\n')[0].substring(0,50), proposal.caption.length>50?'…':''),
-          proposal.hashtags?.length>0 && React.createElement('div', { style:{ fontSize:8, color:'#00376b', marginTop:1, fontFamily:'sans-serif' }},
-            proposal.hashtags.slice(0,3).join(' ')),
-          React.createElement('div', { style:{ fontSize:7.5, color:'#a8a8a8', margin:'3px 0 6px', fontFamily:'sans-serif', textTransform:'uppercase', letterSpacing:.5 }},
-            proposal.date||'Hace 2 horas')))),
-    React.createElement('div', { style:col({ gap:6, width:'100%', maxWidth:246 })},
-      proposal.cta && React.createElement('div', { style:{ background:`${C.cyan}10`, border:`1px solid ${C.cyan}30`, borderRadius:10, padding:'6px 12px', textAlign:'center' }},
-        React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:1 }}, 'CTA'),
-        React.createElement('div', { style:{ fontSize:11, fontWeight:700, color:C.cyan }}, proposal.cta)),
-      proposal.reach && React.createElement('div', { style:{ background:`${C.eGrn}10`, border:`1px solid ${C.eGrn}30`, borderRadius:10, padding:'6px 12px', textAlign:'center' }},
-        React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:1 }}, 'Alcance est.'),
-        React.createElement('div', { style:{ fontSize:13, fontWeight:800, color:C.eGrn }}, proposal.reach))));
+function Notif({msg,type,onClose}){
+  const col={success:C.green,error:C.red,info:C.cyan,warning:C.gold}[type]||C.cyan;
+  return e('div',{style:{position:'fixed',top:20,right:20,zIndex:9999,animation:'fadeUp .2s ease',
+    background:`${C.card}f0`,backdropFilter:'blur(20px)',border:`1px solid ${col}45`,borderRadius:16,
+    padding:'13px 18px',boxShadow:`0 10px 40px rgba(0,0,0,.6),0 0 0 1px ${col}20`,
+    display:'flex',alignItems:'center',gap:12,minWidth:280}},
+    e('div',{style:{width:8,height:8,borderRadius:'50%',background:col,flexShrink:0,boxShadow:`0 0 10px ${col}`}}),
+    e('span',{style:{fontSize:13,fontWeight:600,color:C.ink,flex:1}},msg),
+    e('button',{onClick:onClose,style:{background:'none',border:'none',cursor:'pointer',color:C.dim,display:'flex',padding:0}},e(IC.X,{size:14})));
 }
 
-// ── SIDEBAR ────────────────────────────────────────────────────────────────
-const NAV = [
-  { id:'dashboard', label:'Dashboard',     Icon:LayoutDashboard },
-  { id:'parrilla',  label:'Parrilla',       Icon:Calendar },
-  { id:'proposals', label:'Propuestas',     Icon:FileText },
-  { id:'targets',   label:'Targets',        Icon:Target },
-  { id:'ads',       label:'Ads & Campañas', Icon:Megaphone },
+// ── IG PREVIEW ────────────────────────────────────────────
+function IGPreview({proposal}){
+  const [liked,setLiked]=useState(false);
+  const [saved,setSaved]=useState(false);
+  if(!proposal) return null;
+  const isReel=proposal.type==='reel'||proposal.type==='video';
+  const isStory=proposal.type==='story';
+  return e('div',{style:c({alignItems:'center',gap:10})},
+    e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase',fontWeight:700}},
+      'Preview · ',(proposal.platform||'Instagram')),
+    e('div',{style:{width:242,background:'#070707',borderRadius:42,padding:5,
+      boxShadow:'0 30px 80px rgba(0,0,0,.95),0 0 0 1px #1a1a1a,0 0 0 3px #080808'}},
+      e('div',{style:{height:26,display:'flex',justifyContent:'center',alignItems:'center',paddingTop:3}},
+        e('div',{style:{width:72,height:21,background:'#000',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px'}},
+          e('span',{style:{fontSize:8,color:'#fff',fontFamily:'monospace'}},'9:41'),
+          e('span',{style:{fontSize:7,color:'#fff'}},'●●●'))),
+      e('div',{style:{background:'#fafafa',borderRadius:32,overflow:'hidden'}},
+        e('div',{style:{padding:'7px 10px',borderBottom:'0.5px solid #efefef',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff'}},
+          e('div',{style:r({gap:7})},
+            e('div',{style:{width:26,height:26,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',padding:2,display:'flex',alignItems:'center',justifyContent:'center'}},
+              e('div',{style:{background:'#fff',borderRadius:'50%',padding:1.5,width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center'}},
+                e('span',{style:{fontSize:9,fontWeight:900,color:'#1a1a1a'}},'G'))),
+            e('div',null,
+              e('div',{style:{fontSize:9.5,fontWeight:800,color:'#000',fontFamily:'sans-serif',lineHeight:1}},'gtahub.mx'),
+              e('div',{style:{fontSize:7.5,color:'#888',fontFamily:'sans-serif'}},'Patrocinado'))),
+          e('div',{style:r({gap:6})},e('span',{style:{fontSize:9,fontWeight:700,color:'#1877f2'}},'Seguir'),e(IC.MoreH,{size:13,color:'#000'}))),
+        e('div',{style:{position:'relative',width:'100%',paddingBottom:isStory?'177%':'125%',overflow:'hidden',background:'#e0e0e0'}},
+          e('img',{src:proposal.img,alt:'',style:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}),
+          isReel&&e('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.2)'}},
+            e('div',{style:{width:42,height:42,background:'rgba(255,255,255,.92)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}},
+              e(IC.Play,{size:16,color:'#000',fill:'#000'}))),
+          e('div',{style:{position:'absolute',top:7,right:7,background:'rgba(0,0,0,.7)',borderRadius:5,padding:'2px 6px',fontSize:7,color:'#fff',fontWeight:900,letterSpacing:1.5}},'GTAHUB'),
+          proposal.type==='carousel'&&e('div',{style:{position:'absolute',top:7,left:7,background:'rgba(0,0,0,.65)',borderRadius:4,padding:'2px 5px',fontSize:7,color:'#fff'}},'1/5')),
+        e('div',{style:{padding:'8px 10px 6px',background:'#fff'}},
+          e('div',{style:r({justifyContent:'space-between',marginBottom:5})},
+            e('div',{style:r({gap:12})},
+              e('button',{onClick:()=>setLiked(!liked),style:{background:'none',border:'none',cursor:'pointer',padding:0}},
+                e(IC.Heart,{size:18,fill:liked?'#ed4956':'none',color:liked?'#ed4956':'#262626',strokeWidth:1.5})),
+              e(IC.MessageCircle,{size:18,color:'#262626',strokeWidth:1.5}),
+              e(IC.Send,{size:18,color:'#262626',strokeWidth:1.5})),
+            e('button',{onClick:()=>setSaved(!saved),style:{background:'none',border:'none',cursor:'pointer',padding:0}},
+              e(IC.Bookmark,{size:18,fill:saved?'#262626':'none',color:'#262626',strokeWidth:1.5}))),
+          e('div',{style:{fontSize:9.5,fontWeight:800,color:'#000',fontFamily:'sans-serif',marginBottom:2}},(1247+(liked?1:0)).toLocaleString(),' Me gusta'),
+          e('div',{style:{fontSize:9,color:'#262626',fontFamily:'sans-serif',lineHeight:1.5}},e('span',{style:{fontWeight:800}},'gtahub.mx'),' ',proposal.caption.split('\n')[0].substring(0,46),(proposal.caption.length>46?'…':'')),
+          proposal.hashtags?.length>0&&e('div',{style:{fontSize:8,color:'#00376b',marginTop:1,fontFamily:'sans-serif'}},proposal.hashtags.slice(0,3).join(' ')),
+          e('div',{style:{fontSize:7.5,color:'#a8a8a8',margin:'2px 0 5px',fontFamily:'sans-serif',textTransform:'uppercase',letterSpacing:.5}},proposal.date||'Hace 2 horas')))),
+    e('div',{style:c({gap:6,width:'100%',maxWidth:242})},
+      proposal.cta&&e('div',{style:{background:`${C.cyan}10`,border:`1px solid ${C.cyan}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},
+        e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'CTA'),
+        e('div',{style:{fontSize:11,fontWeight:700,color:C.cyan,marginTop:1}},proposal.cta)),
+      proposal.reach&&e('div',{style:{background:`${C.eGrn}10`,border:`1px solid ${C.eGrn}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},
+        e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'Alcance est.'),
+        e('div',{style:{fontSize:13,fontWeight:800,color:C.eGrn,marginTop:1}},proposal.reach))));
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────
+const NAV=[
+  {id:'dashboard', label:'Dashboard',     Icon:IC.Dashboard},
+  {id:'parrilla',  label:'Parrilla',       Icon:IC.Calendar},
+  {id:'proposals', label:'Propuestas',     Icon:IC.FileText},
+  {id:'targets',   label:'Targets',        Icon:IC.Target},
+  {id:'ads',       label:'Ads & Campañas', Icon:IC.Megaphone},
 ];
-
-function Sidebar({ view, setView, user, setUser, proposals }) {
-  const pending = proposals.filter(p=>p.status==='pending').length;
-  const cfg = ROLE_CFG[user.role]||ROLE_CFG.mkt;
-  return React.createElement('nav', { style:{ width:230, background:C.bg2, borderRight:`1px solid ${C.line}`,
-    display:'flex', flexDirection:'column', flexShrink:0, height:'100vh', overflowY:'auto' }},
-    React.createElement('div', { style:{ padding:'20px 18px 16px', borderBottom:`1px solid ${C.line}` }},
-      React.createElement('div', { style:row({ gap:10 })},
-        React.createElement('div', { style:{ width:36, height:36, borderRadius:10, background:`linear-gradient(135deg,${C.blue},${C.cyan})`,
-          display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 6px 18px ${C.blue}44` }},
-          React.createElement('span', { style:{ fontSize:15, fontWeight:900, color:'#fff' }}, 'G')),
-        React.createElement('div', null,
-          React.createElement('div', { style:{ fontSize:13, fontWeight:900, color:C.ink, letterSpacing:.5 }}, 'GTAHUB'),
-          React.createElement('div', { style:{ fontSize:9, color:C.mute, letterSpacing:1.2, textTransform:'uppercase' }}, 'by Eleevate MX')))),
-    React.createElement('div', { style:{ padding:'10px 14px', borderBottom:`1px solid ${C.line}` }},
-      React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:6, padding:'6px 10px', borderRadius:8, background:cfg.bg, border:`1px solid ${cfg.border}` }},
-        React.createElement(cfg.Icon,{size:11, color:cfg.color}),
-        React.createElement('span', { style:{ fontSize:10, fontWeight:700, color:cfg.color, textTransform:'uppercase', letterSpacing:.8 }}, cfg.label))),
-    React.createElement('div', { style:{ flex:1, padding:'10px 8px' }},
-      NAV.map(n => {
-        const active = view===n.id;
-        const badge  = n.id==='proposals' && pending>0 && user.role==='admin';
-        return React.createElement('button', { key:n.id, onClick:()=>setView(n.id), style:{
-          display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 12px', borderRadius:10,
-          cursor:'pointer', marginBottom:2, background:active?`${C.blue}20`:'transparent',
-          border:active?`1px solid ${C.blue}40`:'1px solid transparent',
-          color:active?C.blueB:C.dim, fontFamily:'Poppins,sans-serif', fontSize:13, fontWeight:active?700:500, textAlign:'left' }},
-          React.createElement(n.Icon,{size:16}),
-          React.createElement('span',{style:{flex:1}}, n.label),
-          badge && React.createElement('span', { style:{ background:C.red, color:'#fff', borderRadius:999, fontSize:9, fontWeight:900, padding:'1px 6px' }}, pending));
+function Sidebar({view,setView,user,setUser,proposals}){
+  const pending=proposals.filter(p=>p.status==='pending').length;
+  const cfg=ROLE_CFG[user.role]||ROLE_CFG.mkt;
+  return e('nav',{style:{width:224,background:`linear-gradient(180deg,${C.bg2},${C.bg})`,
+    borderRight:`1px solid ${C.line}`,display:'flex',flexDirection:'column',flexShrink:0,height:'100vh',overflowY:'auto'}},
+    e('div',{style:{padding:'22px 18px 18px',borderBottom:`1px solid ${C.line}`}},
+      e('div',{style:r({gap:12})},
+        e('div',{className:'logo-g',style:{width:40,height:40,borderRadius:13,background:`linear-gradient(135deg,${C.blue},${C.cyan})`,display:'flex',alignItems:'center',justifyContent:'center'}},
+          e('span',{style:{fontSize:18,fontWeight:900,color:'#fff',letterSpacing:-1}},'G')),
+        e('div',null,
+          e('div',{style:{fontSize:15,fontWeight:900,color:C.ink,letterSpacing:-.5}},'GTAHUB'),
+          e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase'}},'by Eleevate MX')))),
+    e('div',{style:{padding:'12px 14px',borderBottom:`1px solid ${C.line}`}},
+      e('div',{style:{display:'flex',alignItems:'center',gap:7,padding:'7px 11px',borderRadius:10,background:cfg.bg,border:`1px solid ${cfg.border}`}},
+        e(cfg.Icon,{size:11,color:cfg.color}),
+        e('span',{style:{fontSize:10,fontWeight:700,color:cfg.color,textTransform:'uppercase',letterSpacing:.8}},cfg.label))),
+    e('div',{style:{flex:1,padding:'12px 10px',display:'flex',flexDirection:'column',gap:2}},
+      NAV.map(n=>{
+        const active=view===n.id;
+        const badge=n.id==='proposals'&&pending>0&&user.role==='admin';
+        return e('button',{key:n.id,className:'nav-btn',onClick:()=>setView(n.id),style:{
+          display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',
+          background:active?`${C.blue}22`:'transparent',
+          border:active?`1px solid ${C.blue}35`:'1px solid transparent',
+          color:active?C.blueB:C.dim,fontWeight:active?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
+          e(n.Icon,{size:15,color:active?C.blueB:C.dim}),
+          e('span',{style:{flex:1}},n.label),
+          badge&&e('span',{style:{background:C.red,color:'#fff',borderRadius:999,fontSize:9,fontWeight:900,padding:'2px 7px',boxShadow:`0 0 8px ${C.red}55`}},pending));
       }),
-      user.role==='mkt' && React.createElement('button', { onClick:()=>setView('new-proposal'), style:{
-        display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 12px', borderRadius:10,
-        cursor:'pointer', marginBottom:2, background:view==='new-proposal'?`${C.purple}20`:'transparent',
-        border:view==='new-proposal'?`1px solid ${C.purple}40`:'1px solid transparent',
-        color:view==='new-proposal'?C.purple:C.dim, fontFamily:'Poppins,sans-serif',
-        fontSize:13, fontWeight:view==='new-proposal'?700:500, textAlign:'left' }},
-        React.createElement(Plus,{size:16}), React.createElement('span', null, 'Nueva Propuesta'))),
-    React.createElement('div', { style:{ padding:'14px', borderTop:`1px solid ${C.line}` }},
-      React.createElement('div', { style:row({ gap:10, marginBottom:10 })},
-        React.createElement(Avatar, {initials:user.av, color:user.color, size:36}),
-        React.createElement('div', { style:{ flex:1, minWidth:0 }},
-          React.createElement('div', { style:{ fontSize:12, fontWeight:800, color:C.ink, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}, user.emoji,' ',user.name),
-          React.createElement('div', { style:{ fontSize:10, color:C.mute }}, user.tag))),
-      React.createElement('button', { onClick:()=>setUser(null), style:{ display:'flex', alignItems:'center', gap:6, width:'100%', padding:'7px 10px', borderRadius:8,
-        background:C.line, border:`1px solid ${C.lineM}`, cursor:'pointer', color:C.dim, fontSize:11, fontWeight:600 }},
-        React.createElement(LogOut,{size:12}), ' Cerrar sesión')));
+      user.role==='mkt'&&e('button',{className:'nav-btn',onClick:()=>setView('new-proposal'),style:{
+        display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',marginTop:4,
+        background:view==='new-proposal'?`${C.purple}22`:'transparent',
+        border:view==='new-proposal'?`1px solid ${C.purple}35`:'1px solid transparent',
+        color:view==='new-proposal'?C.purple:C.dim,fontWeight:view==='new-proposal'?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
+        e(IC.Plus,{size:15}),e('span',null,'Nueva Propuesta'))),
+    e('div',{style:{padding:'14px',borderTop:`1px solid ${C.line}`}},
+      e('div',{style:{padding:'10px 12px',borderRadius:14,background:C.bg3,border:`1px solid ${C.line}`,marginBottom:8}},
+        e('div',{style:r({gap:10,marginBottom:8})},
+          e(Avatar,{initials:user.av,color:user.color,size:36}),
+          e('div',{style:{flex:1,minWidth:0}},
+            e('div',{style:{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},user.emoji,' ',user.name),
+            e('div',{style:{fontSize:10,color:C.dim,marginTop:1}},user.tag))),
+        e('button',{onClick:()=>setUser(null),style:{display:'flex',alignItems:'center',gap:6,width:'100%',padding:'6px 8px',borderRadius:8,
+          background:'transparent',border:`1px solid ${C.lineM}`,cursor:'pointer',color:C.dim,fontSize:11,fontWeight:600,justifyContent:'center',transition:'all .15s'}},
+          e(IC.LogOut,{size:11}),' Cerrar sesión'))));
 }
 
-// ── LOGIN ──────────────────────────────────────────────────────────────────
-function LoginPage({ onLogin }) {
-  const [sel, setSel] = useState(null);
-  const admins = USERS.filter(u=>u.role==='admin');
-  const mkts   = USERS.filter(u=>u.role==='mkt');
-
-  const UserBtn = (u) => React.createElement('button', { key:u.id, onClick:()=>setSel(u), style:{
-    display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
-    background:sel?.id===u.id?`${u.color}20`:C.bg2,
-    border:sel?.id===u.id?`1px solid ${u.color}60`:`1px solid ${C.line}`,
-    borderRadius:12, cursor:'pointer', transition:'all .2s', width:'100%' }},
-    React.createElement(Avatar, {initials:u.av, color:u.color, size:38}),
-    React.createElement('div', { style:{ textAlign:'left', flex:1 }},
-      React.createElement('div', { style:{ fontSize:13, fontWeight:800, color:C.ink }}, u.emoji,' ',u.name),
-      React.createElement('div', { style:{ fontSize:10, color:C.dim }}, u.tag)),
-    sel?.id===u.id && React.createElement(CheckCircle,{size:16, color:u.color}));
-
-  return React.createElement('div', { style:{ minHeight:'100vh',
-    background:`radial-gradient(circle at 20% 30%,${C.blue}22,transparent 40%),radial-gradient(circle at 80% 70%,${C.purple}15,transparent 35%),${C.bg}`,
-    display:'flex', alignItems:'center', justifyContent:'center' }},
-    React.createElement('div', { style:{ width:'100%', maxWidth:460, padding:'0 20px' }},
-      React.createElement('div', { style:{ textAlign:'center', marginBottom:32 }},
-        React.createElement('div', { style:row({ justifyContent:'center', marginBottom:14 })},
-          React.createElement('div', { style:{ width:56, height:56, borderRadius:18, background:`linear-gradient(135deg,${C.blue},${C.cyan})`,
-            display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 14px 40px ${C.blue}55` }},
-            React.createElement('span', { style:{ fontSize:24, fontWeight:900, color:'#fff' }}, 'G'))),
-        React.createElement('div', { style:{ fontSize:28, fontWeight:900, color:C.ink, letterSpacing:-1 }}, 'GTAHUB'),
-        React.createElement('div', { style:{ fontSize:11, color:C.mute, letterSpacing:2, textTransform:'uppercase', marginTop:4 }}, 'Content Hub · Eleevate MX')),
-      !SHEETS_API_URL && React.createElement('div', { style:{ background:`${C.gold}12`, border:`1px solid ${C.gold}40`, borderRadius:10, padding:'8px 14px', marginBottom:16, textAlign:'center' }},
-        React.createElement('span', { style:{ fontSize:11, color:C.gold, fontWeight:600 }}, '⚡ Modo demo — conecta Google Sheets para datos reales')),
-      React.createElement('div', { style:{ marginBottom:14 }},
-        React.createElement('div', { style:row({ gap:7, marginBottom:8 })},
-          React.createElement('div', { style:{ width:3, height:14, borderRadius:2, background:C.gold }}),
-          React.createElement('span', { style:{ fontSize:10, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:1.2 }}, 'Admin / Staff')),
-        React.createElement('div', { style:col({ gap:6 })}, admins.map(UserBtn))),
-      React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:10, margin:'14px 0' }},
-        React.createElement('div', { style:{ flex:1, height:1, background:C.line }}),
-        React.createElement('span', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:1.5 }}, 'MKT'),
-        React.createElement('div', { style:{ flex:1, height:1, background:C.line }})),
-      React.createElement('div', { style:{ marginBottom:18 }},
-        React.createElement('div', { style:row({ gap:7, marginBottom:8 })},
-          React.createElement('div', { style:{ width:3, height:14, borderRadius:2, background:C.purple }}),
-          React.createElement('span', { style:{ fontSize:10, fontWeight:700, color:C.purple, textTransform:'uppercase', letterSpacing:1.2 }}, 'Usuario de MKT')),
-        React.createElement('div', { style:col({ gap:6 })}, mkts.map(UserBtn))),
-      React.createElement('button', { onClick:()=>sel&&onLogin(sel), style:{ width:'100%', padding:'13px', borderRadius:14, border:'none',
-        cursor:sel?'pointer':'not-allowed',
-        background:sel?`linear-gradient(135deg,${sel.color},${sel.color}cc)`:C.bg3,
-        color:sel?'#fff':C.mute, fontSize:14, fontWeight:800, letterSpacing:.5,
-        boxShadow:sel?`0 12px 35px ${sel.color}44`:'none', transition:'all .3s' }},
-        sel ? `Entrar como ${sel.name} ${sel.emoji} →` : 'Selecciona un perfil'),
-      React.createElement('div', { style:{ textAlign:'center', marginTop:16, fontSize:11, color:C.mute }},
-        'GTAHUB Content Hub · Eleevate MX © 2026')));
+// ── LOGIN ─────────────────────────────────────────────────
+function LoginPage({onLogin}){
+  const [sel,setSel]=useState(null);
+  const admins=USERS.filter(u=>u.role==='admin');
+  const mkts=USERS.filter(u=>u.role==='mkt');
+  const UBtn=(u)=>e('button',{key:u.id,onClick:()=>setSel(u),className:'btn-p',style:{
+    display:'flex',alignItems:'center',gap:13,padding:'13px 15px',
+    background:sel?.id===u.id?`${u.color}18`:C.bg3,
+    border:sel?.id===u.id?`1px solid ${u.color}55`:`1px solid ${C.line}`,
+    borderRadius:14,cursor:'pointer',width:'100%',
+    boxShadow:sel?.id===u.id?`0 8px 24px ${u.color}22`:'none',transition:'all .2s'}},
+    e(Avatar,{initials:u.av,color:u.color,size:40,glow:sel?.id===u.id}),
+    e('div',{style:{textAlign:'left',flex:1}},
+      e('div',{style:{fontSize:14,fontWeight:800,color:C.ink}},u.emoji,' ',u.name),
+      e('div',{style:{fontSize:10,color:C.dim,marginTop:2}},u.tag)),
+    sel?.id===u.id&&e(IC.CheckCircle,{size:17,color:u.color}));
+  return e('div',{style:{minHeight:'100vh',
+    background:`radial-gradient(ellipse at 15% 20%,${C.blue}18 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,${C.purple}12 0%,transparent 50%),${C.bg}`,
+    display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}},
+    e('div',{style:{width:'100%',maxWidth:440}},
+      e('div',{style:{textAlign:'center',marginBottom:36}},
+        e('div',{style:{display:'flex',justifyContent:'center',marginBottom:18}},
+          e('div',{className:'logo-g',style:{width:72,height:72,borderRadius:22,
+            background:`linear-gradient(135deg,${C.blue},${C.cyan})`,
+            display:'flex',alignItems:'center',justifyContent:'center'}}),
+          e('div',{style:{position:'absolute',marginTop:0}})  ),
+        e('div',{style:{display:'flex',justifyContent:'center',marginBottom:18}},
+          e('div',{style:{width:72,height:72,borderRadius:22,
+            background:`linear-gradient(135deg,${C.blue},${C.cyan})`,
+            display:'flex',alignItems:'center',justifyContent:'center',
+            boxShadow:`0 20px 60px ${C.blue}45,0 0 0 1px ${C.blueB}25`}},
+            e('span',{style:{fontSize:32,fontWeight:900,color:'#fff',letterSpacing:-2}},'G'))),
+        e('div',{style:{fontSize:32,fontWeight:900,color:C.ink,letterSpacing:-1.5}},'GTAHUB'),
+        e('div',{style:{fontSize:11,color:C.dim,letterSpacing:3,textTransform:'uppercase',marginTop:5}},'Content Hub · Eleevate MX')),
+      !SHEETS_API_URL&&e('div',{style:{background:`${C.gold}12`,border:`1px solid ${C.gold}30`,borderRadius:12,padding:'9px 16px',marginBottom:20,textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:8}},
+        e(IC.Zap,{size:12,color:C.gold}),e('span',{style:{fontSize:11,color:C.gold,fontWeight:600}},'Modo demo — conecta Google Sheets para datos reales')),
+      e('div',{style:{marginBottom:16}},
+        e('div',{style:r({gap:8,marginBottom:10})},
+          e('div',{style:{width:3,height:16,borderRadius:2,background:C.gold}}),
+          e('span',{style:{fontSize:10,fontWeight:700,color:C.gold,textTransform:'uppercase',letterSpacing:1.5}},'Admin / Staff')),
+        e('div',{style:c({gap:7})},admins.map(UBtn))),
+      e('div',{style:{display:'flex',alignItems:'center',gap:12,margin:'16px 0'}},
+        e('div',{style:{flex:1,height:'1px',background:C.line}}),
+        e('span',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:2}},'MKT'),
+        e('div',{style:{flex:1,height:'1px',background:C.line}})),
+      e('div',{style:{marginBottom:22}},
+        e('div',{style:r({gap:8,marginBottom:10})},
+          e('div',{style:{width:3,height:16,borderRadius:2,background:C.purple}}),
+          e('span',{style:{fontSize:10,fontWeight:700,color:C.purple,textTransform:'uppercase',letterSpacing:1.5}},'Usuario de MKT')),
+        e('div',{style:c({gap:7})},mkts.map(UBtn))),
+      e('button',{onClick:()=>sel&&onLogin(sel),className:'btn-p',style:{width:'100%',padding:'15px',borderRadius:16,border:'none',
+        cursor:sel?'pointer':'not-allowed',fontWeight:800,fontSize:15,letterSpacing:.3,
+        background:sel?`linear-gradient(135deg,${sel.color},${sel.color}bb)`:C.bg3,
+        color:sel?'#fff':C.mute,boxShadow:sel?`0 16px 40px ${sel.color}40`:'none',transition:'all .3s'}},
+        sel?`Entrar como ${sel.name} ${sel.emoji} →`:'Selecciona un perfil'),
+      e('div',{style:{textAlign:'center',marginTop:20,fontSize:11,color:C.mute}},'GTAHUB Content Hub · Eleevate MX © 2026')));
 }
 
-// ── DASHBOARD ──────────────────────────────────────────────────────────────
-function DashboardPage({ proposals, setView, setSelected, user }) {
-  const cnt = {
-    total:    proposals.length,
-    pending:  proposals.filter(p=>p.status==='pending').length,
-    approved: proposals.filter(p=>p.status==='approved').length,
-    review:   proposals.filter(p=>p.status==='review').length,
-  };
-  const mine = user.role==='mkt' ? proposals.filter(p=>p.author===user.name) : proposals;
-  return React.createElement('div', { style:{ padding:'26px 30px', maxWidth:1100 }},
-    React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:26 })},
-      React.createElement('div', null,
-        React.createElement('h1', { style:{ fontSize:22, fontWeight:900, color:C.ink, margin:'0 0 4px', letterSpacing:-.5 }},
-          'Bienvenido, ', user.emoji, ' ', user.name),
-        React.createElement('div', { style:{ fontSize:13, color:C.mute }}, 'Mayo 2026 · ',
-          React.createElement('span', { style:{ color:C.cyan }}, 'Parrilla activa'))),
-      user.role==='admin' && cnt.pending>0 &&
-        React.createElement('button', { onClick:()=>setView('proposals'), style:{ display:'flex', alignItems:'center', gap:8,
-          padding:'10px 16px', borderRadius:12, background:`${C.red}18`, border:`1px solid ${C.red}44`,
-          cursor:'pointer', color:C.red, fontSize:12, fontWeight:700 }},
-          React.createElement(AlertCircle,{size:14}), ' ', cnt.pending, ' pendiente', cnt.pending>1?'s':'', ' de revisión')),
-    React.createElement('div', { style:row({ gap:12, marginBottom:26, flexWrap:'wrap' })},
-      React.createElement(Stat, {label:'Total',       value:cnt.total,    icon:FileText,     color:C.blueB}),
-      React.createElement(Stat, {label:'Pendientes',  value:cnt.pending,  icon:Clock,        color:C.cyan}),
-      React.createElement(Stat, {label:'Aprobadas',   value:cnt.approved, icon:CheckCircle,  color:C.green}),
-      React.createElement(Stat, {label:'En revisión', value:cnt.review,   icon:Eye,          color:C.gold})),
-    React.createElement('div', null,
-      React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:12 })},
-        React.createElement('span', { style:{ fontSize:13, fontWeight:700, color:C.ink, textTransform:'uppercase', letterSpacing:.5 }},
-          user.role==='mkt' ? 'Mis Propuestas' : 'Actividad Reciente'),
-        React.createElement('button', { onClick:()=>setView('proposals'), style:{ fontSize:11, color:C.cyan, background:'none', border:'none', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:3 }},
-          'Ver todo ', React.createElement(ChevronRight,{size:12}))),
-      React.createElement('div', { style:col({ gap:8 })},
-        mine.length===0 && React.createElement('div', { style:{ textAlign:'center', padding:30, color:C.mute, fontSize:13 }}, 'Aún no hay propuestas.'),
-        mine.slice(0,5).map(p => React.createElement(Card, { key:p.id, style:{ padding:'13px 16px' }},
-          React.createElement('div', { style:row({ gap:12 })},
-            React.createElement('img', {src:p.img, style:{width:44,height:44,borderRadius:8,objectFit:'cover',flexShrink:0}, alt:''}),
-            React.createElement('div', { style:{ flex:1, minWidth:0 }},
-              React.createElement('div', { style:row({ gap:8, marginBottom:4, flexWrap:'wrap' })},
-                React.createElement('span', { style:{ fontSize:13, fontWeight:700, color:C.ink }}, p.title),
-                React.createElement(TypeBadge,{type:p.type})),
-              React.createElement('div', { style:{ fontSize:11, color:C.mute }}, p.week,' · ',p.day,' · ',p.author)),
-            React.createElement('div', { style:row({ gap:8, alignItems:'center', flexShrink:0 })},
-              React.createElement(StatusBadge,{status:p.status}),
-              React.createElement('button', { onClick:()=>{ setSelected(p); setView('proposal-detail'); }, style:{ background:`${C.blue}20`, border:`1px solid ${C.blue}40`, borderRadius:8, padding:'6px 10px', cursor:'pointer', color:C.blueB, fontSize:11, fontWeight:700 }}, 'Ver')))))),
-    user.role==='mkt' && React.createElement('div', { style:row({ gap:10, marginTop:16 })},
-      React.createElement(Btn, {variant:'primary', onClick:()=>setView('new-proposal')}, React.createElement(Plus,{size:14}), ' Nueva propuesta'),
-      React.createElement(Btn, {onClick:()=>setView('parrilla')}, React.createElement(Calendar,{size:14}), ' Ver parrilla')));
+// ── DASHBOARD ─────────────────────────────────────────────
+function DashboardPage({proposals,setView,setSelected,user}){
+  const cnt={total:proposals.length,pending:proposals.filter(p=>p.status==='pending').length,approved:proposals.filter(p=>p.status==='approved').length,review:proposals.filter(p=>p.status==='review').length};
+  const mine=user.role==='mkt'?proposals.filter(p=>p.author===user.name):proposals;
+  return e('div',{className:'page',style:{padding:'28px 32px',maxWidth:1080}},
+    e('div',{style:r({justifyContent:'space-between',marginBottom:28})},
+      e('div',null,
+        e('h1',{style:{fontSize:24,fontWeight:900,color:C.ink,margin:'0 0 5px',letterSpacing:-.8}},'Hola, ',user.emoji,' ',user.name.split(' ')[0],' 👋'),
+        e('div',{style:{fontSize:13,color:C.dim}},'Mayo 2026 · ',e('span',{style:{color:C.cyan,fontWeight:600}},'Parrilla activa'))),
+      user.role==='admin'&&cnt.pending>0&&e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:14,background:`${C.red}15`,border:`1px solid ${C.red}35`,cursor:'pointer',color:C.red,fontSize:12,fontWeight:700}},e(IC.AlertCircle,{size:14}),' ',cnt.pending,' pendiente',cnt.pending>1?'s':'',' de revisión')),
+    e('div',{style:r({gap:14,marginBottom:28,flexWrap:'wrap'})},
+      e(Stat,{label:'Total',       value:cnt.total,    Icon:IC.FileText,    color:C.blueB}),
+      e(Stat,{label:'Pendientes',  value:cnt.pending,  Icon:IC.Clock,       color:C.cyan}),
+      e(Stat,{label:'Aprobadas',   value:cnt.approved, Icon:IC.CheckCircle, color:C.green}),
+      e(Stat,{label:'En revisión', value:cnt.review,   Icon:IC.Eye,         color:C.gold})),
+    e('div',null,
+      e('div',{style:r({justifyContent:'space-between',marginBottom:14})},
+        e('span',{style:{fontSize:14,fontWeight:800,color:C.ink}},user.role==='mkt'?'Mis Propuestas':'Actividad Reciente'),
+        e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:4,fontSize:12,color:C.cyan,background:'none',border:'none',cursor:'pointer',fontWeight:700}},'Ver todas ',e(IC.ChevronRight,{size:13}))),
+      e('div',{style:c({gap:9})},
+        mine.length===0&&e('div',{style:{textAlign:'center',padding:40,color:C.mute,fontSize:13}},'Sin propuestas aún.'),
+        mine.slice(0,5).map(p=>e(Card,{key:p.id,hover:true,style:{padding:'14px 18px'},onClick:()=>{setSelected(p);setView('proposal-detail');}},
+          e('div',{style:r({gap:14})},
+            e('div',{style:{position:'relative',flexShrink:0}},
+              e('img',{src:p.img,style:{width:50,height:50,borderRadius:12,objectFit:'cover',display:'block'},alt:''}),
+              e('div',{style:{position:'absolute',bottom:-3,right:-3,width:19,height:19,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},
+                e((TYPE[p.type]||TYPE.post).Icon,{size:8,color:(TYPE[p.type]||TYPE.post).color}))),
+            e('div',{style:{flex:1,minWidth:0}},
+              e('div',{style:r({gap:7,marginBottom:4,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{type:p.type})),
+              e('div',{style:{fontSize:11,color:C.dim}},p.week,' · ',p.day,' · ',p.author)),
+            e('div',{style:r({flexShrink:0})},e(SBadge,{status:p.status}))))))),
+    user.role==='mkt'&&e('div',{style:r({gap:10,marginTop:20})},
+      e(Btn,{v:'primary',onClick:()=>setView('new-proposal')},e(IC.Plus,{size:14}),' Nueva propuesta'),
+      e(Btn,{onClick:()=>setView('parrilla')},e(IC.Calendar,{size:14}),' Ver parrilla')));
 }
 
-// ── PROPOSALS ──────────────────────────────────────────────────────────────
-function ProposalsPage({ proposals, setProposals, setView, setSelected, user, showNotif }) {
-  const [filter, setFilter] = useState('all');
-  const [weekF,  setWeekF]  = useState('all');
-  const TABS = ['all','pending','approved','review','rejected'];
-  const TLBL = { all:'Todas', pending:'Pendientes', approved:'Aprobadas', review:'En Revisión', rejected:'Rechazadas' };
-  const filtered = proposals.filter(p => {
-    const sOk = filter==='all'||p.status===filter;
-    const wOk = weekF==='all'||p.week===weekF;
-    const aOk = user.role==='admin'||p.author===user.name;
-    return sOk&&wOk&&aOk;
-  });
-  const act = async (id, status) => {
-    await api.updateStatus(id, status);
+// ── PROPOSALS ─────────────────────────────────────────────
+function ProposalsPage({proposals,setProposals,setView,setSelected,user,showNotif}){
+  const [filter,setFilter]=useState('all');
+  const [weekF,setWeekF]=useState('all');
+  const TABS=['all','pending','approved','review','rejected'];
+  const TLBL={all:'Todas',pending:'Pendientes',approved:'Aprobadas',review:'En Revisión',rejected:'Rechazadas'};
+  const filtered=proposals.filter(p=>(filter==='all'||p.status===filter)&&(weekF==='all'||p.week===weekF)&&(user.role==='admin'||p.author===user.name));
+  const act=async(id,status)=>{
+    await api.update(id,status);
     setProposals(ps=>ps.map(p=>p.id===id?{...p,status}:p));
-    const lbl = { approved:'aprobada ✓', rejected:'rechazada ✗', review:'enviada a revisión' };
-    showNotif(`Propuesta ${lbl[status]}`, status==='approved'?'success':status==='rejected'?'error':'info');
+    showNotif(`Propuesta ${({approved:'aprobada ✓',rejected:'rechazada ✗',review:'a revisión'})[status]}`,status==='approved'?'success':status==='rejected'?'error':'info');
   };
-  return React.createElement('div', { style:{ padding:'26px 30px', maxWidth:1000 }},
-    React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:22 })},
-      React.createElement('div', null,
-        React.createElement('h1', { style:{ fontSize:20, fontWeight:900, color:C.ink, margin:'0 0 4px' }}, 'Propuestas'),
-        React.createElement('div', { style:{ fontSize:13, color:C.mute }}, filtered.length, ' resultado', filtered.length!==1?'s':'')),
-      user.role==='mkt' && React.createElement(Btn, {variant:'primary', size:'sm', onClick:()=>setView('new-proposal')}, React.createElement(Plus,{size:13}), ' Nueva')),
-    React.createElement('div', { style:row({ gap:8, marginBottom:16, flexWrap:'wrap' })},
-      React.createElement('div', { style:row({ gap:3, background:C.bg2, borderRadius:12, padding:4, border:`1px solid ${C.line}` })},
-        TABS.map(t => React.createElement('button', { key:t, onClick:()=>setFilter(t), style:{
-          padding:'6px 11px', borderRadius:8, fontSize:11, fontWeight:700,
-          background:filter===t?C.bg4:'transparent', border:filter===t?`1px solid ${C.lineM}`:'1px solid transparent',
-          color:filter===t?C.ink:C.dim, cursor:'pointer', whiteSpace:'nowrap' }}, TLBL[t]))),
-      React.createElement('select', { value:weekF, onChange:e=>setWeekF(e.target.value), style:{
-        padding:'7px 12px', borderRadius:8, fontSize:11, fontWeight:700,
-        background:C.bg2, border:`1px solid ${C.lineM}`, color:C.dim, cursor:'pointer' }},
-        React.createElement('option', {value:'all'}, 'Todas las semanas'),
-        WEEKS.map(w => React.createElement('option', {key:w, value:w}, w)))),
-    React.createElement('div', { style:col({ gap:9 })},
-      filtered.length===0 && React.createElement('div', { style:{ textAlign:'center', padding:40, color:C.mute, fontSize:14 }}, 'Sin propuestas con este filtro'),
-      filtered.map(p => {
-        const TC = TYPE[p.type];
-        return React.createElement(Card, { key:p.id, style:{ padding:'14px 16px' }},
-          React.createElement('div', { style:row({ gap:13 })},
-            React.createElement('div', { style:{ position:'relative', flexShrink:0 }},
-              React.createElement('img', {src:p.img, style:{width:60,height:60,borderRadius:10,objectFit:'cover',display:'block'}, alt:''}),
-              TC && React.createElement('div', { style:{ position:'absolute', bottom:-3, right:-3, width:20, height:20, borderRadius:'50%', background:C.bg3, border:`2px solid ${C.bg2}`, display:'flex', alignItems:'center', justifyContent:'center' }},
-                React.createElement(TC.Icon,{size:9, color:TC.color}))),
-            React.createElement('div', { style:{ flex:1, minWidth:0 }},
-              React.createElement('div', { style:row({ gap:7, marginBottom:5, flexWrap:'wrap' })},
-                React.createElement('span', { style:{ fontSize:13, fontWeight:700, color:C.ink }}, p.title),
-                React.createElement(TypeBadge,{type:p.type})),
-              React.createElement('div', { style:{ fontSize:11, color:C.mute }}, p.week,' · ',p.day,' ',p.time,' · ',p.author)),
-            React.createElement('div', { style:col({ gap:7, alignItems:'flex-end', flexShrink:0 })},
-              React.createElement(StatusBadge,{status:p.status}),
-              React.createElement('div', { style:row({ gap:5 })},
-                user.role==='admin'&&p.status==='pending' && React.createElement(React.Fragment, null,
-                  React.createElement('button', { title:'Aprobar', onClick:()=>act(p.id,'approved'), style:{ background:`${C.green}18`, border:`1px solid ${C.green}40`, borderRadius:7, padding:'5px 8px', cursor:'pointer', color:C.green, display:'flex' }}, React.createElement(CheckCircle,{size:13})),
-                  React.createElement('button', { title:'Revisar', onClick:()=>act(p.id,'review'), style:{ background:`${C.gold}18`, border:`1px solid ${C.gold}40`, borderRadius:7, padding:'5px 8px', cursor:'pointer', color:C.gold, display:'flex' }}, React.createElement(Eye,{size:13})),
-                  React.createElement('button', { title:'Rechazar', onClick:()=>act(p.id,'rejected'), style:{ background:`${C.red}18`, border:`1px solid ${C.red}40`, borderRadius:7, padding:'5px 8px', cursor:'pointer', color:C.red, display:'flex' }}, React.createElement(XCircle,{size:13}))),
-                React.createElement('button', { onClick:()=>{ setSelected(p); setView('proposal-detail'); }, style:{ background:`${C.blue}18`, border:`1px solid ${C.blue}40`, borderRadius:7, padding:'5px 10px', cursor:'pointer', color:C.blueB, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4 }},
-                  React.createElement(Eye,{size:12}), ' Ver')))));
+  return e('div',{className:'page',style:{padding:'28px 32px',maxWidth:1000}},
+    e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
+      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Propuestas'),e('div',{style:{fontSize:13,color:C.dim}},filtered.length,' resultado',filtered.length!==1?'s':'')),
+      user.role==='mkt'&&e(Btn,{v:'primary',sm:true,onClick:()=>setView('new-proposal')},e(IC.Plus,{size:13}),' Nueva')),
+    e('div',{style:r({gap:10,marginBottom:18,flexWrap:'wrap'})},
+      e('div',{style:{background:C.bg2,borderRadius:14,padding:5,border:`1px solid ${C.line}`,display:'flex',gap:3}},
+        TABS.map(t=>e('button',{key:t,onClick:()=>setFilter(t),style:{padding:'6px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:filter===t?C.bg4:'transparent',border:filter===t?`1px solid ${C.lineM}`:'1px solid transparent',color:filter===t?C.ink:C.dim,whiteSpace:'nowrap'}},TLBL[t]))),
+      e('select',{value:weekF,onChange:ev=>setWeekF(ev.target.value),style:{padding:'9px 14px',borderRadius:12,fontSize:11,fontWeight:700,background:C.bg2,border:`1px solid ${C.lineM}`,color:C.dim,cursor:'pointer'}},
+        e('option',{value:'all'},'Todas las semanas'),WEEKS.map(w=>e('option',{key:w,value:w},w)))),
+    e('div',{style:c({gap:10})},
+      filtered.length===0&&e('div',{style:{textAlign:'center',padding:50,color:C.mute,fontSize:14}},'Sin propuestas con este filtro'),
+      filtered.map(p=>{
+        const TC=TYPE[p.type];
+        return e(Card,{key:p.id,style:{padding:'15px 18px'}},
+          e('div',{style:r({gap:14})},
+            e('div',{style:{position:'relative',flexShrink:0}},
+              e('img',{src:p.img,style:{width:62,height:62,borderRadius:14,objectFit:'cover',display:'block'},alt:''}),
+              TC&&e('div',{style:{position:'absolute',bottom:-4,right:-4,width:22,height:22,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},e(TC.Icon,{size:10,color:TC.color}))),
+            e('div',{style:{flex:1,minWidth:0}},
+              e('div',{style:r({gap:8,marginBottom:5,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{type:p.type})),
+              e('div',{style:{fontSize:11,color:C.dim}},p.week,' · ',p.day,' ',p.time,' · ',p.author)),
+            e('div',{style:c({gap:8,alignItems:'flex-end',flexShrink:0})},
+              e(SBadge,{status:p.status}),
+              e('div',{style:r({gap:6})},
+                user.role==='admin'&&p.status==='pending'&&e(React.Fragment,null,
+                  e('button',{title:'Aprobar',onClick:()=>act(p.id,'approved'),style:{background:`${C.green}15`,border:`1px solid ${C.green}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.green,display:'flex'}},e(IC.CheckCircle,{size:13})),
+                  e('button',{title:'Revisar',onClick:()=>act(p.id,'review'),style:{background:`${C.gold}15`,border:`1px solid ${C.gold}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.gold,display:'flex'}},e(IC.Eye,{size:13})),
+                  e('button',{title:'Rechazar',onClick:()=>act(p.id,'rejected'),style:{background:`${C.red}15`,border:`1px solid ${C.red}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.red,display:'flex'}},e(IC.XCircle,{size:13}))),
+                e('button',{onClick:()=>{setSelected(p);setView('proposal-detail');},style:{background:`${C.blue}15`,border:`1px solid ${C.blue}35`,borderRadius:9,padding:'6px 12px',cursor:'pointer',color:C.blueB,fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:5}},e(IC.Eye,{size:12}),' Ver')))));
       })));
 }
 
-// ── PROPOSAL DETAIL ────────────────────────────────────────────────────────
-function ProposalDetailPage({ proposal:initP, proposals, setProposals, setView, user, showNotif }) {
-  const [note,          setNote]          = useState(initP.notes||'');
-  const [confirmReject, setConfirmReject] = useState(false);
-  const p = proposals.find(x=>x.id===initP.id)||initP;
-
-  const doAction = async (status) => {
-    await api.updateStatus(p.id, status, note);
+// ── PROPOSAL DETAIL ───────────────────────────────────────
+function ProposalDetailPage({proposal:initP,proposals,setProposals,setView,user,showNotif}){
+  const [note,setNote]=useState(initP.notes||'');
+  const [confirmR,setConfirmR]=useState(false);
+  const p=proposals.find(x=>x.id===initP.id)||initP;
+  const doAction=async(status)=>{
+    await api.update(p.id,status,note);
     setProposals(ps=>ps.map(x=>x.id===p.id?{...x,status,notes:note}:x));
-    const msgs = { approved:'✅ Propuesta aprobada', review:'👁 Enviada a revisión', rejected:'❌ Propuesta rechazada' };
-    showNotif(msgs[status], status==='approved'?'success':status==='rejected'?'error':'info');
-    setConfirmReject(false);
+    showNotif({approved:'✅ Aprobada',review:'👁 A revisión',rejected:'❌ Rechazada'}[status],status==='approved'?'success':status==='rejected'?'error':'info');
+    setConfirmR(false);
   };
-
-  return React.createElement('div', { style:{ padding:'22px 28px', maxWidth:1100 }},
-    React.createElement('button', { onClick:()=>setView('proposals'), style:{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:C.dim, fontSize:12, fontWeight:600, marginBottom:18, padding:0 }},
-      React.createElement(ArrowLeft,{size:14}), ' Volver a propuestas'),
-    React.createElement('div', { style:row({ gap:26, alignItems:'flex-start' })},
-      React.createElement('div', { style:{ flexShrink:0 }}, React.createElement(IGPreview, {proposal:p})),
-      React.createElement('div', { style:{ flex:1, minWidth:0 }},
-        React.createElement('div', { style:row({ gap:10, marginBottom:18, flexWrap:'wrap' })},
-          React.createElement('h2', { style:{ fontSize:19, fontWeight:900, color:C.ink, flex:1, margin:0 }}, p.title),
-          React.createElement(StatusBadge,{status:p.status}), React.createElement(TypeBadge,{type:p.type})),
-        React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:9, marginBottom:16 }},
-          [['Autor',p.author],['Plataforma',p.platform],['Semana',p.week],['Publicación',`${p.day} · ${p.time}`],
-           ['Target',p.target],['Alcance est.',p.reach||'—'],
-           ...(p.budget?[['Presupuesto',`$${p.budget} MXN`]]:[])
-          ].map(([k,v]) => React.createElement('div', {key:k, style:{ background:C.bg2, borderRadius:10, padding:'10px 13px', border:`1px solid ${C.line}` }},
-            React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:.8, marginBottom:3 }}, k),
-            React.createElement('div', { style:{ fontSize:13, fontWeight:600, color:C.ink }}, v)))),
-        React.createElement(Card, { style:{ padding:'13px 15px', marginBottom:12 }},
-          React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:1, marginBottom:7 }}, 'Caption'),
-          React.createElement('pre', { style:{ fontSize:12, color:C.ink, fontFamily:'Poppins,sans-serif', whiteSpace:'pre-wrap', lineHeight:1.7, margin:0 }}, p.caption)),
-        p.hashtags?.length>0 && React.createElement('div', { style:row({ gap:5, flexWrap:'wrap', marginBottom:12 })},
-          p.hashtags.map(h => React.createElement(Pill, {key:h, label:h, color:C.blueB}))),
-        React.createElement(Card, { style:{ padding:'13px 15px', marginBottom:16 }},
-          React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:1, marginBottom:7 }},
-            user.role==='admin' ? 'Notas del equipo' : 'Feedback'),
-          user.role==='admin'
-            ? React.createElement('textarea', { value:note, onChange:e=>setNote(e.target.value), placeholder:'Escribe feedback…', rows:3,
-                style:{ width:'100%', background:C.bg3, border:`1px solid ${C.lineM}`, borderRadius:8, padding:'8px 11px', color:C.ink, fontSize:12, resize:'vertical', outline:'none' }})
-            : React.createElement('div', { style:{ fontSize:12, color:p.notes?C.dim:C.mute, lineHeight:1.7 }}, p.notes||'Sin notas aún.')),
-        user.role==='admin' && React.createElement('div', null,
-          React.createElement('div', { style:{ fontSize:10, color:C.mute, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}, 'Acciones de revisión'),
-          React.createElement('div', { style:row({ gap:9, flexWrap:'wrap' })},
-            React.createElement(Btn, {variant:'success', onClick:()=>doAction('approved')}, React.createElement(CheckCircle,{size:14}), ' Aprobar'),
-            React.createElement(Btn, {variant:'warning', onClick:()=>doAction('review')}, React.createElement(Eye,{size:14}), ' A revisión'),
-            !confirmReject
-              ? React.createElement(Btn, {variant:'danger', onClick:()=>setConfirmReject(true)}, React.createElement(XCircle,{size:14}), ' Rechazar')
-              : React.createElement('div', { style:row({ gap:8 })},
-                  React.createElement(Btn, {variant:'danger', onClick:()=>doAction('rejected')}, React.createElement(XCircle,{size:14}), ' Confirmar'),
-                  React.createElement(Btn, {onClick:()=>setConfirmReject(false)}, 'Cancelar')))))));
+  const inp={width:'100%',background:C.bg3,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:12,outline:'none'};
+  return e('div',{className:'page',style:{padding:'22px 28px',maxWidth:1100}},
+    e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',color:C.dim,fontSize:12,fontWeight:600,marginBottom:20,padding:0}},e(IC.ArrowLeft,{size:14}),' Volver'),
+    e('div',{style:r({gap:28,alignItems:'flex-start'})},
+      e('div',{style:{flexShrink:0}},e(IGPreview,{proposal:p})),
+      e('div',{style:{flex:1,minWidth:0}},
+        e('div',{style:r({gap:10,marginBottom:20,flexWrap:'wrap'})},
+          e('h2',{style:{fontSize:20,fontWeight:900,color:C.ink,flex:1,margin:0}},p.title),
+          e(SBadge,{status:p.status}),e(TBadge,{type:p.type})),
+        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}},
+          [['Autor',p.author],['Plataforma',p.platform],['Semana',p.week],['Publicación',`${p.day} · ${p.time}`],['Target',p.target],['Alcance est.',p.reach||'—'],...(p.budget?[['Presupuesto',`$${p.budget} MXN`]]:[])].map(([k,v])=>
+            e('div',{key:k,style:{background:C.bg3,borderRadius:12,padding:'11px 14px',border:`1px solid ${C.line}`}},
+              e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.8,marginBottom:4}},k),
+              e('div',{style:{fontSize:13,fontWeight:700,color:C.ink}},v)))),
+        e(Card,{style:{padding:'14px 16px',marginBottom:12}},
+          e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},'Caption'),
+          e('pre',{style:{fontSize:12,color:C.ink,fontFamily:'Poppins,sans-serif',whiteSpace:'pre-wrap',lineHeight:1.8,margin:0}},p.caption)),
+        p.hashtags?.length>0&&e('div',{style:r({gap:6,flexWrap:'wrap',marginBottom:14})},p.hashtags.map(h=>e(Pill,{key:h,label:h,color:C.blueB}))),
+        e(Card,{style:{padding:'14px 16px',marginBottom:18}},
+          e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},user.role==='admin'?'Notas del equipo':'Feedback'),
+          user.role==='admin'?e('textarea',{value:note,onChange:ev=>setNote(ev.target.value),placeholder:'Escribe feedback…',rows:3,style:{...inp,resize:'vertical'}}):e('div',{style:{fontSize:12,color:p.notes?C.dim:C.mute,lineHeight:1.7}},p.notes||'Sin notas aún.')),
+        user.role==='admin'&&e('div',null,
+          e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:12}},'Acciones de revisión'),
+          e('div',{style:r({gap:10,flexWrap:'wrap'})},
+            e(Btn,{v:'success',onClick:()=>doAction('approved')},e(IC.CheckCircle,{size:14}),' Aprobar'),
+            e(Btn,{v:'warning',onClick:()=>doAction('review')},e(IC.Eye,{size:14}),' A revisión'),
+            !confirmR?e(Btn,{v:'danger',onClick:()=>setConfirmR(true)},e(IC.XCircle,{size:14}),' Rechazar'):e('div',{style:r({gap:8})},
+              e(Btn,{v:'danger',onClick:()=>doAction('rejected')},e(IC.XCircle,{size:14}),' Confirmar'),
+              e(Btn,{onClick:()=>setConfirmR(false)},'Cancelar')))))));
 }
 
-// ── NEW PROPOSAL ───────────────────────────────────────────────────────────
-function NewProposalPage({ proposals, setProposals, setView, user, showNotif }) {
-  const [form, setForm] = useState({
-    title:'', type:'reel', week:'Semana 1', day:'Lunes', time:'12:00',
-    img:'', caption:'', hashtags:'', cta:'', target:'', notes:'', budget:'',
-  });
-  const [preview, setPreview] = useState(false);
-  const [saving,  setSaving]  = useState(false);
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
-
-  const submit = async () => {
-    if(!form.title||!form.caption){ showNotif('Completa título y caption','error'); return; }
+// ── NEW PROPOSAL ──────────────────────────────────────────
+function NewProposalPage({proposals,setProposals,setView,user,showNotif}){
+  const [form,setForm]=useState({title:'',type:'reel',week:'Semana 1',day:'Lunes',time:'12:00',img:'',caption:'',hashtags:'',cta:'',target:'',budget:''});
+  const [preview,setPreview]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const inp={width:'100%',background:C.bg2,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:13,outline:'none'};
+  const lbl={fontSize:10,color:C.dim,fontWeight:700,textTransform:'uppercase',letterSpacing:.8,marginBottom:6,display:'block'};
+  const prevP={...form,hashtags:form.hashtags.split(/[\s,]+/).filter(Boolean),img:form.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop'};
+  const submit=async()=>{
+    if(!form.title||!form.caption){showNotif('Completa título y caption','error');return;}
     setSaving(true);
-    const newP = {
-      title:form.title, type:form.type, author:user.name, av:user.av, acColor:user.color,
-      week:form.week, day:form.day, time:form.time, caption:form.caption,
-      img:form.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',
-      hashtags:form.hashtags.split(/[\s,]+/).filter(Boolean),
-      cta:form.cta, target:form.target, platform:'Instagram',
-      date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}),
-      notes:form.notes, reach:'—', budget:form.budget?parseInt(form.budget):null,
-    };
-    const result = await api.add(newP);
-    setProposals(ps=>[...ps, { ...newP, id:result.id||Date.now(), status:'pending' }]);
+    const np={title:form.title,type:form.type,author:user.name,av:user.av,acColor:user.color,week:form.week,day:form.day,time:form.time,caption:form.caption,img:form.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',hashtags:form.hashtags.split(/[\s,]+/).filter(Boolean),cta:form.cta,target:form.target,platform:'Instagram',date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}),notes:'',reach:'—',budget:form.budget?parseInt(form.budget):null};
+    const r=await api.add(np);
+    setProposals(ps=>[...ps,{...np,id:r.id||Date.now(),status:'pending'}]);
     showNotif('✅ Propuesta enviada para revisión','success');
-    setSaving(false);
-    setView('proposals');
+    setSaving(false);setView('proposals');
   };
-
-  const inp = { width:'100%', background:C.bg2, border:`1px solid ${C.lineM}`, borderRadius:10, padding:'9px 13px', color:C.ink, fontSize:13, outline:'none' };
-  const lbl = { fontSize:10, color:C.dim, fontWeight:700, textTransform:'uppercase', letterSpacing:.8, marginBottom:5, display:'block' };
-  const prevP = { ...form, hashtags:form.hashtags.split(/[\s,]+/).filter(Boolean), img:form.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop' };
-
-  return React.createElement('div', { style:{ padding:'22px 28px', maxWidth:980 }},
-    React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:22 })},
-      React.createElement('div', null,
-        React.createElement('h1', { style:{ fontSize:20, fontWeight:900, color:C.ink, margin:'0 0 4px' }}, 'Nueva Propuesta'),
-        React.createElement('div', { style:{ fontSize:13, color:C.mute }}, 'Crea una propuesta para la parrilla')),
-      React.createElement(Btn, {size:'sm', onClick:()=>setPreview(!preview)},
-        preview ? React.createElement(React.Fragment, null, React.createElement(X,{size:13}),' Ocultar')
-                : React.createElement(React.Fragment, null, React.createElement(Eye,{size:13}),' Vista previa'))),
-    React.createElement('div', { style:row({ gap:26, alignItems:'flex-start' })},
-      React.createElement('div', { style:{ flex:1, minWidth:0 }},
-        React.createElement('div', { style:{ marginBottom:13 }},
-          React.createElement('label', {style:lbl}, 'Título'),
-          React.createElement('input', { value:form.title, onChange:e=>set('title',e.target.value), placeholder:'Ej: Reel: Top 5 misiones épicas', style:inp })),
-        React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:9, marginBottom:13 }},
+  return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:980}},
+    e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
+      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Nueva Propuesta'),e('div',{style:{fontSize:13,color:C.dim}},'Crea una propuesta para la parrilla semanal')),
+      e(Btn,{sm:true,onClick:()=>setPreview(!preview)},preview?e(React.Fragment,null,e(IC.X,{size:13}),' Ocultar'):e(React.Fragment,null,e(IC.Eye,{size:13}),' Vista previa'))),
+    e('div',{style:r({gap:28,alignItems:'flex-start'})},
+      e('div',{style:{flex:1,minWidth:0}},
+        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Título'),e('input',{value:form.title,onChange:ev=>set('title',ev.target.value),placeholder:'Ej: Reel: Top 5 misiones épicas',style:inp})),
+        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:14}},
           [{k:'type',label:'Tipo',opts:Object.keys(TYPE),fn:k=>TYPE[k].label},{k:'week',label:'Semana',opts:WEEKS},{k:'day',label:'Día',opts:DAYS}]
-            .map(f => React.createElement('div', {key:f.k},
-              React.createElement('label', {style:lbl}, f.label),
-              React.createElement('select', { value:form[f.k], onChange:e=>set(f.k,e.target.value), style:{...inp,cursor:'pointer'}},
-                f.opts.map(o => React.createElement('option', {key:o,value:o}, f.fn?f.fn(o):o))))),
-          React.createElement('div', {key:'time'},
-            React.createElement('label', {style:lbl}, 'Hora'),
-            React.createElement('input', {type:'time', value:form.time, onChange:e=>set('time',e.target.value), style:inp}))),
-        React.createElement('div', { style:{ marginBottom:13 }},
-          React.createElement('label', {style:lbl}, 'URL de imagen'),
-          React.createElement('input', { value:form.img, onChange:e=>set('img',e.target.value), placeholder:'https://… (opcional)', style:inp })),
-        React.createElement('div', { style:{ marginBottom:13 }},
-          React.createElement('label', {style:lbl}, 'Caption'),
-          React.createElement('textarea', { value:form.caption, onChange:e=>set('caption',e.target.value), rows:4, placeholder:'Escribe el copy del post…', style:{...inp,resize:'vertical'} })),
-        React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:9, marginBottom:13 }},
-          React.createElement('div', null,
-            React.createElement('label', {style:lbl}, 'Hashtags'),
-            React.createElement('input', { value:form.hashtags, onChange:e=>set('hashtags',e.target.value), placeholder:'#GTAHUB, #GTA5', style:inp })),
-          React.createElement('div', null,
-            React.createElement('label', {style:lbl}, 'Call to Action'),
-            React.createElement('input', { value:form.cta, onChange:e=>set('cta',e.target.value), placeholder:'Link en bio', style:inp }))),
-        React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:9, marginBottom:20 }},
-          React.createElement('div', null,
-            React.createElement('label', {style:lbl}, 'Target'),
-            React.createElement('input', { value:form.target, onChange:e=>set('target',e.target.value), placeholder:'Gamers 18–28, México', style:inp })),
-          React.createElement('div', null,
-            React.createElement('label', {style:lbl}, 'Presupuesto MXN'),
-            React.createElement('input', {type:'number', value:form.budget, onChange:e=>set('budget',e.target.value), placeholder:'0', style:inp }))),
-        React.createElement('div', { style:row({ gap:9 })},
-          React.createElement(Btn, {variant:'primary', onClick:submit, style:{opacity:saving?.6:1}},
-            saving ? React.createElement(React.Fragment, null, React.createElement(Loader,{size:14}),' Guardando…') : React.createElement(React.Fragment, null, React.createElement(Zap,{size:14}),' Enviar propuesta')),
-          React.createElement(Btn, {onClick:()=>setView('proposals')}, 'Cancelar'))),
-      preview && React.createElement('div', { style:{ flexShrink:0 }}, React.createElement(IGPreview, {proposal:prevP}))));
+            .map(f=>e('div',{key:f.k},e('label',{style:lbl},f.label),e('select',{value:form[f.k],onChange:ev=>set(f.k,ev.target.value),style:{...inp,cursor:'pointer'}},f.opts.map(o=>e('option',{key:o,value:o},f.fn?f.fn(o):o))))),
+          e('div',{key:'time'},e('label',{style:lbl},'Hora'),e('input',{type:'time',value:form.time,onChange:ev=>set('time',ev.target.value),style:inp}))),
+        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'URL de imagen'),e('input',{value:form.img,onChange:ev=>set('img',ev.target.value),placeholder:'https://… (opcional)',style:inp})),
+        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Caption'),e('textarea',{value:form.caption,onChange:ev=>set('caption',ev.target.value),rows:4,placeholder:'Escribe el copy del post…',style:{...inp,resize:'vertical'}})),
+        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}},
+          e('div',null,e('label',{style:lbl},'Hashtags'),e('input',{value:form.hashtags,onChange:ev=>set('hashtags',ev.target.value),placeholder:'#GTAHUB, #GTA5',style:inp})),
+          e('div',null,e('label',{style:lbl},'Call to Action'),e('input',{value:form.cta,onChange:ev=>set('cta',ev.target.value),placeholder:'Link en bio',style:inp}))),
+        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:22}},
+          e('div',null,e('label',{style:lbl},'Target'),e('input',{value:form.target,onChange:ev=>set('target',ev.target.value),placeholder:'Gamers 18–28, México',style:inp})),
+          e('div',null,e('label',{style:lbl},'Presupuesto MXN'),e('input',{type:'number',value:form.budget,onChange:ev=>set('budget',ev.target.value),placeholder:'0',style:inp}))),
+        e('div',{style:r({gap:10})},
+          e(Btn,{v:'primary',onClick:submit,style:{opacity:saving?.7:1}},saving?'Guardando…':e(React.Fragment,null,e(IC.Zap,{size:14}),' Enviar propuesta')),
+          e(Btn,{onClick:()=>setView('proposals')},'Cancelar'))),
+      preview&&e('div',{style:{flexShrink:0}},e(IGPreview,{proposal:prevP}))));
 }
 
-// ── PARRILLA ───────────────────────────────────────────────────────────────
-function ParrillaPage({ proposals, setView, setSelected }) {
-  const [weekF, setWeekF] = useState('Semana 1');
-  const wps = proposals.filter(p=>p.week===weekF);
-  return React.createElement('div', { style:{ padding:'22px 26px' }},
-    React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:20 })},
-      React.createElement('div', null,
-        React.createElement('h1', { style:{ fontSize:20, fontWeight:900, color:C.ink, margin:'0 0 4px' }}, 'Parrilla Semanal'),
-        React.createElement('div', { style:{ fontSize:13, color:C.mute }}, 'Calendario · ', weekF)),
-      React.createElement('div', { style:row({ gap:6 })},
-        WEEKS.map(w => React.createElement('button', {key:w, onClick:()=>setWeekF(w), style:{
-          padding:'7px 11px', borderRadius:8, fontSize:11, fontWeight:700,
-          background:weekF===w?`${C.blue}25`:C.bg2, border:weekF===w?`1px solid ${C.blue}50`:`1px solid ${C.line}`,
-          color:weekF===w?C.blueB:C.dim, cursor:'pointer' }}, w)))),
-    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'70px repeat(7,1fr)', gap:7 }},
-      React.createElement('div'),
-      DAYS.map(d => React.createElement('div', {key:d, style:{ padding:'8px 4px', textAlign:'center', fontSize:10, fontWeight:700, color:C.dim, textTransform:'uppercase', letterSpacing:.8 }}, d.substring(0,3))),
-      React.createElement('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'flex-end', paddingTop:10, paddingRight:6 }},
-        React.createElement('span', { style:{ fontSize:10, color:C.blueB, fontWeight:700, textTransform:'uppercase' }}, weekF.replace('Semana','S'))),
-      DAYS.map(day => {
-        const dayPs = wps.filter(p=>p.day===day);
-        return React.createElement('div', {key:day, style:{ minHeight:130, background:C.bg2, border:`1px solid ${C.line}`, borderRadius:12, padding:6, display:'flex', flexDirection:'column', gap:5 }},
-          dayPs.length===0 && React.createElement('div', { style:{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', color:C.mute, fontSize:12 }}, '—'),
-          dayPs.map(p => {
-            const sc=STATUS[p.status], TC=TYPE[p.type];
-            return React.createElement('button', {key:p.id, onClick:()=>{ setSelected(p); setView('proposal-detail'); }, style:{
-              display:'flex', flexDirection:'column', gap:2, padding:'7px 8px',
-              background:`${sc.color}18`, border:`1px solid ${sc.color}33`,
-              borderRadius:8, cursor:'pointer', textAlign:'left', width:'100%' }},
-              React.createElement('div', { style:{ fontSize:9, fontWeight:800, color:sc.color, textTransform:'uppercase' }}, p.time),
-              React.createElement('div', { style:{ fontSize:10, fontWeight:700, color:C.ink, lineHeight:1.3, overflow:'hidden' }}, p.title.replace(/^[^:]+: /,'')),
-              React.createElement('div', { style:row({ gap:4 })},
-                TC && React.createElement(TC.Icon,{size:8, color:TC.color}),
-                React.createElement('span', { style:{ fontSize:8, color:C.dim }}, p.author)));
+// ── PARRILLA ──────────────────────────────────────────────
+function ParrillaPage({proposals,setView,setSelected}){
+  const [weekF,setWeekF]=useState('Semana 1');
+  const wps=proposals.filter(p=>p.week===weekF);
+  return e('div',{className:'page',style:{padding:'24px 28px'}},
+    e('div',{style:r({justifyContent:'space-between',marginBottom:22})},
+      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Parrilla Semanal'),e('div',{style:{fontSize:13,color:C.dim}},'Calendario · ',weekF)),
+      e('div',{style:r({gap:6})},WEEKS.map(w=>e('button',{key:w,onClick:()=>setWeekF(w),style:{padding:'8px 13px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:weekF===w?`${C.blue}22`:C.bg2,border:weekF===w?`1px solid ${C.blue}45`:`1px solid ${C.line}`,color:weekF===w?C.blueB:C.dim}},w)))),
+    e('div',{style:{display:'grid',gridTemplateColumns:'56px repeat(7,1fr)',gap:8}},
+      e('div'),
+      DAYS.map(d=>e('div',{key:d,style:{padding:'8px 4px',textAlign:'center',fontSize:10,fontWeight:700,color:C.dim,textTransform:'uppercase',letterSpacing:.8}},d.substring(0,3))),
+      e('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:12}},e('span',{style:{fontSize:10,color:C.blueB,fontWeight:700,textTransform:'uppercase'}},weekF.replace('Semana','S'))),
+      DAYS.map(day=>{
+        const dayPs=wps.filter(p=>p.day===day);
+        return e('div',{key:day,style:{minHeight:130,background:C.bg2,border:`1px solid ${C.line}`,borderRadius:14,padding:7,display:'flex',flexDirection:'column',gap:6}},
+          dayPs.length===0&&e('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:C.mute,fontSize:12}},'—'),
+          dayPs.map(p=>{
+            const sc=STATUS[p.status],TC=TYPE[p.type];
+            return e('button',{key:p.id,onClick:()=>{setSelected(p);setView('proposal-detail');},style:{display:'flex',flexDirection:'column',gap:2,padding:'7px 9px',background:`${sc.color}15`,border:`1px solid ${sc.color}30`,borderRadius:10,cursor:'pointer',textAlign:'left',width:'100%'}},
+              e('div',{style:{fontSize:9,fontWeight:800,color:sc.color,textTransform:'uppercase',letterSpacing:.5}},p.time),
+              e('div',{style:{fontSize:10,fontWeight:700,color:C.ink,lineHeight:1.4,overflow:'hidden'}},p.title.replace(/^[^:]+: /,'')),
+              e('div',{style:r({gap:4})},TC&&e(TC.Icon,{size:8,color:TC.color}),e('span',{style:{fontSize:8,color:C.dim}},p.author)));
           }));
       }),
-      [2,3,4].flatMap(n => [
-        React.createElement('div', {key:`l${n}`, style:{ display:'flex', alignItems:'flex-start', justifyContent:'flex-end', paddingTop:10, paddingRight:6 }},
-          React.createElement('span', { style:{ fontSize:10, color:C.mute, fontWeight:700 }}, `S${n+1}`)),
-        ...DAYS.map(d => React.createElement('div', {key:`${n}${d}`, style:{ minHeight:60, background:`${C.bg2}55`, border:`1px dashed ${C.line}`, borderRadius:12 }}))
+      [2,3,4].flatMap(n=>[
+        e('div',{key:`l${n}`,style:{display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:12}},e('span',{style:{fontSize:10,color:C.mute,fontWeight:700}},`S${n+1}`)),
+        ...DAYS.map(d=>e('div',{key:`${n}${d}`,style:{minHeight:60,background:`${C.bg2}55`,border:`1px dashed ${C.line}`,borderRadius:14}}))
       ])),
-    React.createElement('div', { style:row({ gap:14, marginTop:16, flexWrap:'wrap' })},
-      Object.entries(STATUS).map(([k,v]) => React.createElement('div', {key:k, style:row({ gap:5 })},
-        React.createElement('div', { style:{ width:9, height:9, borderRadius:3, background:v.color }}),
-        React.createElement('span', { style:{ fontSize:11, color:C.dim }}, v.label)))));
+    e('div',{style:r({gap:16,marginTop:18,flexWrap:'wrap'})},
+      Object.entries(STATUS).map(([k,v])=>e('div',{key:k,style:r({gap:6})},
+        e('div',{style:{width:10,height:10,borderRadius:3,background:v.color,boxShadow:`0 0 6px ${v.color}66`}}),
+        e('span',{style:{fontSize:11,color:C.dim}},v.label)))));
 }
 
-// ── TARGETS ────────────────────────────────────────────────────────────────
-function TargetsPage() {
-  return React.createElement('div', { style:{ padding:'22px 28px', maxWidth:920 }},
-    React.createElement('div', { style:{ marginBottom:22 }},
-      React.createElement('h1', { style:{ fontSize:20, fontWeight:900, color:C.ink, margin:'0 0 4px' }}, 'Targets & Audiencia'),
-      React.createElement('div', { style:{ fontSize:13, color:C.mute }}, 'Segmentos de audiencia para campañas')),
-    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:13 }},
-      TARGETS.map(t => React.createElement(Card, {key:t.id, style:{ padding:'18px 20px', position:'relative', overflow:'hidden' }},
-        React.createElement('div', { style:{ position:'absolute', top:0, left:0, right:0, height:3, background:t.color, borderRadius:'18px 18px 0 0' }}),
-        React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:14 })},
-          React.createElement('div', null,
-            React.createElement('div', { style:{ fontSize:15, fontWeight:800, color:C.ink }}, t.name),
-            React.createElement('div', { style:{ fontSize:11, color:C.mute }}, t.platform)),
-          React.createElement('div', { style:{ textAlign:'right' }},
-            React.createElement('div', { style:{ fontSize:22, fontWeight:900, color:t.color }}, t.size),
-            React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:.5 }}, 'usuarios est.'))),
-        React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:7, marginBottom:13 }},
-          [['Edad',t.age],['Género',t.gender],['Ubicación',t.location]].map(([k,v]) =>
-            React.createElement('div', {key:k, style:{ background:C.bg3, borderRadius:8, padding:'7px 10px' }},
-              React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:.7 }}, k),
-              React.createElement('div', { style:{ fontSize:12, fontWeight:700, color:C.ink }}, v)))),
-        React.createElement('div', { style:row({ gap:5, flexWrap:'wrap' })},
-          t.interests.map(i => React.createElement(Pill, {key:i, label:i, color:t.color})))))));
+// ── TARGETS ───────────────────────────────────────────────
+function TargetsPage(){
+  return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:920}},
+    e('div',{style:{marginBottom:24}},e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Targets & Audiencia'),e('div',{style:{fontSize:13,color:C.dim}},'Segmentos definidos para campañas GTAHUB')),
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
+      TARGETS.map(t=>e(Card,{key:t.id,style:{padding:'20px',position:'relative',overflow:'hidden'}},
+        e('div',{style:{position:'absolute',top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${t.color},${t.color}44)`,borderRadius:'20px 20px 0 0'}}),
+        e('div',{style:r({justifyContent:'space-between',marginBottom:16})},
+          e('div',null,e('div',{style:{fontSize:16,fontWeight:800,color:C.ink}},t.name),e('div',{style:{fontSize:11,color:C.dim,marginTop:2}},t.platform)),
+          e('div',{style:{textAlign:'right'}},e('div',{style:{fontSize:26,fontWeight:900,color:t.color,letterSpacing:-1}},t.size),e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'usuarios est.'))),
+        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}},
+          [['Edad',t.age],['Género',t.gender],['Ubicación',t.location]].map(([k,v])=>
+            e('div',{key:k,style:{background:C.bg3,borderRadius:10,padding:'8px 12px'}},
+              e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.7,marginBottom:3}},k),
+              e('div',{style:{fontSize:12,fontWeight:700,color:C.ink}},v)))),
+        e('div',{style:r({gap:5,flexWrap:'wrap'})},t.interests.map(i=>e(Pill,{key:i,label:i,color:t.color})))))));
 }
 
-// ── ADS ────────────────────────────────────────────────────────────────────
-function AdsPage() {
-  const total = CAMPAIGNS.reduce((s,c)=>s+c.budget,0);
-  const spent = CAMPAIGNS.reduce((s,c)=>s+c.spent,0);
-  return React.createElement('div', { style:{ padding:'22px 28px', maxWidth:920 }},
-    React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:22 })},
-      React.createElement('div', null,
-        React.createElement('h1', { style:{ fontSize:20, fontWeight:900, color:C.ink, margin:'0 0 4px' }}, 'Ads & Campañas'),
-        React.createElement('div', { style:{ fontSize:13, color:C.mute }}, 'Presupuesto publicitario · Mayo 2026')),
-      React.createElement(Btn, {variant:'primary', size:'sm'}, React.createElement(Plus,{size:13}),' Nueva campaña')),
-    React.createElement('div', { style:row({ gap:12, marginBottom:24, flexWrap:'wrap' })},
-      React.createElement(Stat, {label:'Presupuesto total', value:`$${total.toLocaleString()}`, icon:BarChart2,   color:C.gold}),
-      React.createElement(Stat, {label:'Invertido',         value:`$${spent.toLocaleString()}`, icon:TrendingUp,  color:C.red}),
-      React.createElement(Stat, {label:'Disponible',        value:`$${(total-spent).toLocaleString()}`, icon:DollarSign, color:C.green}),
-      React.createElement(Stat, {label:'Activas',           value:CAMPAIGNS.filter(c=>c.status==='active').length, icon:Zap, color:C.cyan})),
-    React.createElement('div', { style:col({ gap:10 })},
-      CAMPAIGNS.map(camp => {
+// ── ADS ───────────────────────────────────────────────────
+function AdsPage(){
+  const total=CAMPAIGNS.reduce((s,c)=>s+c.budget,0);
+  const spent=CAMPAIGNS.reduce((s,c)=>s+c.spent,0);
+  return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:920}},
+    e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
+      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Ads & Campañas'),e('div',{style:{fontSize:13,color:C.dim}},'Presupuesto publicitario · Mayo 2026')),
+      e(Btn,{v:'primary',sm:true},e(IC.Plus,{size:13}),' Nueva campaña')),
+    e('div',{style:r({gap:14,marginBottom:26,flexWrap:'wrap'})},
+      e(Stat,{label:'Presupuesto total',value:`$${total.toLocaleString()}`,Icon:IC.BarChart2,  color:C.gold}),
+      e(Stat,{label:'Invertido',        value:`$${spent.toLocaleString()}`,Icon:IC.TrendingUp, color:C.red}),
+      e(Stat,{label:'Disponible',       value:`$${(total-spent).toLocaleString()}`,Icon:IC.DollarSign,color:C.green}),
+      e(Stat,{label:'Activas',          value:CAMPAIGNS.filter(c=>c.status==='active').length,Icon:IC.Activity,color:C.cyan})),
+    e('div',{style:c({gap:12})},
+      CAMPAIGNS.map(camp=>{
         const pct=Math.round((camp.spent/camp.budget)*100);
-        const sc={ active:C.green, completed:C.dim, scheduled:C.cyan }[camp.status];
-        const sl={ active:'Activa', completed:'Completada', scheduled:'Programada' }[camp.status];
-        return React.createElement(Card, {key:camp.id, style:{ padding:'18px 20px' }},
-          React.createElement('div', { style:row({ gap:14 })},
-            React.createElement('div', { style:{ width:4, borderRadius:2, background:camp.color, alignSelf:'stretch' }}),
-            React.createElement('div', { style:{ flex:1, minWidth:0 }},
-              React.createElement('div', { style:row({ justifyContent:'space-between', marginBottom:10 })},
-                React.createElement('div', null,
-                  React.createElement('div', { style:{ fontSize:14, fontWeight:800, color:C.ink, marginBottom:3 }}, camp.name),
-                  React.createElement('div', { style:row({ gap:10 })},
-                    React.createElement('span', { style:{ fontSize:11, color:C.mute }}, camp.platform),' ',
-                    React.createElement('span', { style:{ fontSize:11, color:C.mute }}, camp.startDate,' – ',camp.endDate),' ',
-                    React.createElement('span', { style:{ fontSize:11, color:C.eGrn }}, '📊 ',camp.reach))),
-                React.createElement('div', { style:row({ gap:12, alignItems:'center', flexShrink:0 })},
-                  React.createElement('span', { style:{ fontSize:11, fontWeight:700, color:sc, background:`${sc}18`, padding:'3px 8px', borderRadius:999, border:`1px solid ${sc}33` }}, sl),
-                  React.createElement('div', { style:{ textAlign:'right' }},
-                    React.createElement('div', { style:{ fontSize:16, fontWeight:900, color:camp.color }}, '$',camp.budget.toLocaleString()),
-                    React.createElement('div', { style:{ fontSize:9, color:C.mute, textTransform:'uppercase', letterSpacing:.5 }}, 'presupuesto')))),
-              React.createElement('div', { style:{ background:C.bg3, borderRadius:4, height:6, overflow:'hidden' }},
-                React.createElement('div', { style:{ height:'100%', width:`${pct}%`, background:camp.color, borderRadius:4 }})),
-              React.createElement('div', { style:row({ justifyContent:'space-between', marginTop:5 })},
-                React.createElement('span', { style:{ fontSize:10, color:C.mute }}, 'Gastado: $',camp.spent.toLocaleString()),
-                React.createElement('span', { style:{ fontSize:10, color:camp.color, fontWeight:700 }}, pct,'%')))));
+        const sc={active:C.green,completed:C.dim,scheduled:C.cyan}[camp.status];
+        const sl={active:'Activa',completed:'Completada',scheduled:'Programada'}[camp.status];
+        return e(Card,{key:camp.id,style:{padding:'20px 22px'}},
+          e('div',{style:r({gap:16})},
+            e('div',{style:{width:4,borderRadius:2,background:`linear-gradient(180deg,${camp.color},${camp.color}44)`,alignSelf:'stretch',flexShrink:0}}),
+            e('div',{style:{flex:1,minWidth:0}},
+              e('div',{style:r({justifyContent:'space-between',marginBottom:12})},
+                e('div',null,
+                  e('div',{style:{fontSize:15,fontWeight:800,color:C.ink,marginBottom:4}},camp.name),
+                  e('div',{style:r({gap:8,flexWrap:'wrap'})},
+                    e('span',{style:{fontSize:11,color:C.dim}},camp.platform),
+                    e('span',{style:{fontSize:11,color:C.dim}},'·'),
+                    e('span',{style:{fontSize:11,color:C.dim}},camp.startDate,' – ',camp.endDate),
+                    e('span',{style:{fontSize:11,color:C.eGrn}},'📊 ',camp.reach))),
+                e('div',{style:r({gap:12,alignItems:'center',flexShrink:0})},
+                  e('span',{style:{fontSize:11,fontWeight:700,color:sc,background:`${sc}18`,padding:'4px 10px',borderRadius:999,border:`1px solid ${sc}30`}},sl),
+                  e('div',{style:{textAlign:'right'}},
+                    e('div',{style:{fontSize:18,fontWeight:900,color:camp.color,letterSpacing:-.5}},'$',camp.budget.toLocaleString()),
+                    e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'presupuesto')))),
+              e('div',{style:{background:C.bg3,borderRadius:6,height:7,overflow:'hidden',marginBottom:6}},
+                e('div',{style:{height:'100%',width:`${pct}%`,background:`linear-gradient(90deg,${camp.color},${camp.color}77)`,borderRadius:6}})),
+              e('div',{style:r({justifyContent:'space-between'})},
+                e('span',{style:{fontSize:10,color:C.dim}},'Gastado: $',camp.spent.toLocaleString()),
+                e('span',{style:{fontSize:10,color:camp.color,fontWeight:800}},pct,'%')))));
       })));
 }
 
-// ── ROOT APP ───────────────────────────────────────────────────────────────
-function App() {
-  const [user,      setUser]      = useState(null);
-  const [view,      setView]      = useState('dashboard');
-  const [proposals, setProposals] = useState([]);
-  const [loading,   setLoading]   = useState(false);
-  const [selected,  setSelected]  = useState(null);
-  const [notif,     setNotif]     = useState(null);
-
-  // Cargar propuestas desde Sheets (o mock si no hay URL)
-  useEffect(() => {
-    if (!user) return;
+// ── ROOT APP ──────────────────────────────────────────────
+function App(){
+  const [user,setUser]=useState(null);
+  const [view,setView]=useState('dashboard');
+  const [proposals,setProposals]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [selected,setSelected]=useState(null);
+  const [notif,setNotif]=useState(null);
+  useEffect(()=>{
+    if(!user) return;
     setLoading(true);
-    api.get()
-      .then(data => setProposals(data))
-      .catch(() => setProposals(MOCK_PROPOSALS))
-      .finally(() => setLoading(false));
-  }, [user]);
-
-  const showNotif = (msg, type='success') => {
-    setNotif({msg, type});
-    setTimeout(() => setNotif(null), 3200);
+    api.get().then(d=>setProposals(d)).catch(()=>setProposals(MOCK)).finally(()=>setLoading(false));
+  },[user]);
+  const showNotif=(msg,type='success')=>{setNotif({msg,type});setTimeout(()=>setNotif(null),3200);};
+  if(!user) return e(LoginPage,{onLogin:u=>{setUser(u);setView('dashboard');}});
+  const pages={
+    'dashboard':       ()=>e(DashboardPage,      {proposals,setView,setSelected,user}),
+    'proposals':       ()=>e(ProposalsPage,       {proposals,setProposals,setView,setSelected,user,showNotif}),
+    'proposal-detail': ()=>selected?e(ProposalDetailPage,{proposal:selected,proposals,setProposals,setView,user,showNotif}):null,
+    'new-proposal':    ()=>e(NewProposalPage,     {proposals,setProposals,setView,user,showNotif}),
+    'parrilla':        ()=>e(ParrillaPage,        {proposals,setView,setSelected}),
+    'targets':         ()=>e(TargetsPage),
+    'ads':             ()=>e(AdsPage),
   };
-
-  if (!user) return React.createElement(LoginPage, { onLogin: u => { setUser(u); setView('dashboard'); } });
-
-  const NAV_ITEMS = [
-    { id:'dashboard',       Page: DashboardPage,       props: { proposals, setView, setSelected, user } },
-    { id:'proposals',       Page: ProposalsPage,       props: { proposals, setProposals, setView, setSelected, user, showNotif } },
-    { id:'proposal-detail', Page: ProposalDetailPage,  props: selected ? { proposal:selected, proposals, setProposals, setView, user, showNotif } : null },
-    { id:'new-proposal',    Page: NewProposalPage,     props: { proposals, setProposals, setView, user, showNotif } },
-    { id:'parrilla',        Page: ParrillaPage,        props: { proposals, setView, setSelected } },
-    { id:'targets',         Page: TargetsPage,         props: {} },
-    { id:'ads',             Page: AdsPage,             props: {} },
-  ];
-
-  return React.createElement('div', { style:{ display:'flex', height:'100vh', background:C.bg, color:C.ink, overflow:'hidden' }},
-    React.createElement(Sidebar, { view, setView, user, setUser, proposals }),
-    React.createElement('main', { style:{ flex:1, overflow:'auto', position:'relative' }},
-      notif && React.createElement(Notif, { msg:notif.msg, type:notif.type, onClose:()=>setNotif(null) }),
-      loading && React.createElement('div', { style:{ position:'absolute', top:0, left:0, right:0, height:2,
-        background:`linear-gradient(90deg,${C.blue},${C.cyan},${C.purple})`,
-        animation:'none', zIndex:100 }}),
-      NAV_ITEMS.map(({ id, Page, props }) =>
-        view===id && props !== null
-          ? React.createElement(Page, { key:id, ...props })
-          : null
-      )));
+  return e('div',{style:{display:'flex',height:'100vh',background:C.bg,color:C.ink,overflow:'hidden'}},
+    e(Sidebar,{view,setView,user,setUser,proposals}),
+    e('main',{style:{flex:1,overflow:'auto',position:'relative',background:`radial-gradient(ellipse at 80% 5%,${C.blue}06 0%,transparent 50%),${C.bg}`}},
+      notif&&e(Notif,{msg:notif.msg,type:notif.type,onClose:()=>setNotif(null)}),
+      loading&&e('div',{style:{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${C.blue},${C.cyan},${C.purple},${C.blue})`,backgroundSize:'200%',animation:'shimmer 1.5s linear infinite',zIndex:100}}),
+      (pages[view]||(()=>null))()));
 }
 
-ReactDOM.render(React.createElement(App), document.getElementById('root'));
+// ── MOUNT ─────────────────────────────────────────────────
+try{
+  ReactDOM.render(e(App),document.getElementById('root'));
+}catch(err){
+  document.getElementById('root').innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;color:#ff3b5c;"><div style="font-size:48px">⚠️</div><div style="font-size:18px;font-weight:700">Error al cargar la app</div><div style="font-size:13px;color:#6b7a99;max-width:400px;text-align:center">${err.message}</div></div>`;
+  console.error('GTAHUB Error:', err);
+}
 </script>
 </body>
 </html>
