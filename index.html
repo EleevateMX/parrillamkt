@@ -5,259 +5,214 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>GTAHUB · Content Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/umd/lucide.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%;font-family:'Poppins',sans-serif}
-body{background:#080e1c;overflow:hidden}
-::-webkit-scrollbar{width:4px;height:4px}
+body{background:#07101e;overflow:hidden;color:#eef2ff}
+::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 input,select,textarea,button{font-family:'Poppins',sans-serif}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(26,115,232,.35)}50%{box-shadow:0 0 40px rgba(0,212,255,.5)}}
-.page{animation:fadeUp .28s ease forwards}
-.nav-btn:hover{background:rgba(77,159,255,.12)!important;color:#4d9fff!important}
-.card-h{transition:all .18s ease;cursor:pointer}
-.card-h:hover{border-color:rgba(26,115,232,.4)!important;transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.4)!important}
-.btn-p{transition:all .18s ease}
-.btn-p:hover{transform:translateY(-1px);filter:brightness(1.1)}
-.btn-p:active{transform:translateY(0)}
-.logo-g{animation:glow 3s ease-in-out infinite}
+textarea:focus,input:focus,select:focus{outline:2px solid rgba(26,115,232,.5);outline-offset:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{left:-100%}100%{left:200%}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(26,115,232,.4)}50%{box-shadow:0 0 35px rgba(0,212,255,.5)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.page{animation:fadeUp .25s ease both}
+.nav-btn:hover{background:rgba(77,159,255,.14)!important;color:#4d9fff!important}
+.card-hover:hover{border-color:rgba(26,115,232,.5)!important;transform:translateY(-2px);box-shadow:0 16px 48px rgba(0,0,0,.5)!important;cursor:pointer}
+.card-hover{transition:all .18s ease}
+.btn-ani{transition:all .18s ease}
+.btn-ani:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn-ani:active{transform:translateY(0)}
+.logo-pulse{animation:glow 3s ease-in-out infinite}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script>
-// ═══════════════════════════════════════════════════════════
-//  ⚙️  GOOGLE SHEETS URL — pega aquí la URL de tu Apps Script
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  ⚙️  GOOGLE SHEETS URL
+//  Pega aquí la URL de tu Apps Script Web App
+//  Deja vacío "" para modo demo con datos de ejemplo
+// ═══════════════════════════════════════════════════
 const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwAdPqLQyjR1VYmuIOHnxdBGirPs_W09j_ku4jMLmS_yIjRVyb9F6A8_d7kdMfp7uscxQ/exec";
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 
-const { useState, useEffect } = React;
+const {useState,useEffect} = React;
 
-// ── SAFE ICON LOADER ──────────────────────────────────────
-// Evita crash si algún icono no existe en esta versión de Lucide
-function makeIcon(name, fallback) {
-  return lucide[name] || lucide[fallback] || lucide['Circle'] || function(){
-    return React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},
-      React.createElement('circle',{cx:12,cy:12,r:9}));
-  };
+// ── INLINE SVG ICONS (sin CDN externo) ─────────────
+// Cada icono es una función (size, color) => JSX
+function Icon({d, size=16, color='currentColor', fill='none', strokeWidth=1.8, style:sx}){
+  return React.createElement('svg',{
+    width:size,height:size,viewBox:'0 0 24 24',fill,stroke:color,
+    strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{flexShrink:0,...sx}},
+    React.createElement('path',{d}));
 }
+function IconMulti({paths,size=16,color='currentColor',strokeWidth=1.8,style:sx}){
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color,strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{flexShrink:0,...sx}},
+    paths.map((p,i)=>React.createElement('path',{key:i,d:p})));
+}
+
 const IC = {
-  Dashboard:    makeIcon('LayoutDashboard','Columns'),
-  Calendar:     makeIcon('Calendar'),
-  FileText:     makeIcon('FileText'),
-  Target:       makeIcon('Target','Circle'),
-  Megaphone:    makeIcon('Megaphone','Bell'),
-  CheckCircle:  makeIcon('CheckCircle'),
-  XCircle:      makeIcon('XCircle'),
-  Clock:        makeIcon('Clock'),
-  Eye:          makeIcon('Eye'),
-  Plus:         makeIcon('Plus'),
-  LogOut:       makeIcon('LogOut'),
-  Heart:        makeIcon('Heart'),
-  MessageCircle:makeIcon('MessageCircle'),
-  Bookmark:     makeIcon('Bookmark'),
-  Send:         makeIcon('Send'),
-  MoreH:        makeIcon('MoreHorizontal','MoreVertical'),
-  TrendingUp:   makeIcon('TrendingUp','ArrowUp'),
-  DollarSign:   makeIcon('DollarSign'),
-  X:            makeIcon('X'),
-  ChevronRight: makeIcon('ChevronRight'),
-  Film:         makeIcon('Film'),
-  Camera:       makeIcon('Camera'),
-  Play:         makeIcon('Play'),
-  Layers:       makeIcon('Layers'),
-  ArrowLeft:    makeIcon('ArrowLeft'),
-  Zap:          makeIcon('Zap'),
-  Shield:       makeIcon('Shield'),
-  BarChart2:    makeIcon('BarChart2','BarChart'),
-  AlertCircle:  makeIcon('AlertCircle','Alert'),
-  Radio:        makeIcon('Radio','Wifi'),
-  Star:         makeIcon('Star','Award'),
-  Award:        makeIcon('Award','Star'),
-  Activity:     makeIcon('Activity','TrendingUp'),
-  Bell:         makeIcon('Bell'),
+  Dashboard:  (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z','M9 22V12h6v10']}),
+  Calendar:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M8 2v4','M16 2v4','M3 10h18','M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z']}),
+  FileText:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z','M14 2v6h6','M16 13H8','M16 17H8','M10 9H8']}),
+  Target:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z','M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z']}),
+  Megaphone:  (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M3 11l19-9-9 19-2-8-8-2z']}),
+  CheckCircle:(s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M22 11.08V12a10 10 0 1 1-5.93-9.14','M22 4 12 14.01l-3-3']}),
+  XCircle:    (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M15 9l-6 6','M9 9l6 6']}),
+  Clock:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 6v6l4 2']}),
+  Eye:        (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z','M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z']}),
+  Plus:       (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 5v14','M5 12h14']}),
+  LogOut:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4','M16 17l5-5-5-5','M21 12H9']}),
+  Heart:      (s,c,f)=>React.createElement(IconMulti,{size:s,color:c,paths:['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']}),
+  MessageCircle:(s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z']}),
+  Bookmark:   (s,c)=>React.createElement(Icon,{d:'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',size:s,color:c}),
+  Send:       (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M22 2 11 13','M22 2 15 22 11 13 2 9l20-7z']}),
+  MoreH:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,strokeWidth:2.5,paths:['M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z']}),
+  TrendUp:    (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M23 6l-9.5 9.5-5-5L1 18','M17 6h6v6']}),
+  Dollar:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 1v22','M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6']}),
+  X:          (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M18 6 6 18','M6 6l12 12']}),
+  ChevronR:   (s,c)=>React.createElement(Icon,{d:'M9 18l6-6-6-6',size:s,color:c}),
+  Film:       (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M2 8h20','M2 16h20','M8 2v20','M16 2v20','M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z']}),
+  Camera:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z','M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z']}),
+  Play:       (s,c,f)=>React.createElement(Icon,{d:'M5 3l14 9-14 9V3z',size:s,color:c,fill:f||'none'}),
+  Layers:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 2 2 7l10 5 10-5-10-5z','M2 17l10 5 10-5','M2 12l10 5 10-5']}),
+  ArrowLeft:  (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M19 12H5','M12 19l-7-7 7-7']}),
+  Zap:        (s,c)=>React.createElement(Icon,{d:'M13 2 3 14h9l-1 8 10-12h-9l1-8z',size:s,color:c}),
+  Shield:     (s,c)=>React.createElement(Icon,{d:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',size:s,color:c}),
+  BarChart:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M18 20V10','M12 20V4','M6 20v-6']}),
+  Alert:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 8v4','M12 16h.01']}),
+  Radio:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M5 12.55a11 11 0 0 1 14.08 0','M1.42 9a16 16 0 0 1 21.16 0','M8.53 16.11a6 6 0 0 1 6.95 0','M12 20h.01']}),
+  Star:       (s,c)=>React.createElement(Icon,{d:'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',size:s,color:c}),
+  Activity:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M22 12h-4l-3 9L9 3l-3 9H2']}),
 };
 
-// ── THEME ─────────────────────────────────────────────────
-const C = {
-  bg:'#080e1c', bg2:'#0c1423', bg3:'#111b2e', bg4:'#172036', card:'#0f1928',
-  blue:'#1a73e8', blueB:'#4d9fff', cyan:'#00d4ff',
-  gold:'#f4c542', red:'#ff3b5c', green:'#00e676', eGrn:'#22b14c',
-  purple:'#a855f7', pink:'#ff6eb4',
-  ink:'#eef2ff', dim:'#6b7a99', mute:'#2d3a52',
-  line:'rgba(255,255,255,0.05)', lineM:'rgba(255,255,255,0.1)',
+// ── THEME ────────────────────────────────────────────
+const C={
+  bg:'#07101e',bg2:'#0c1524',bg3:'#101d30',bg4:'#162238',card:'#0e1929',
+  blue:'#1a73e8',blueB:'#4d9fff',cyan:'#00d4ff',
+  gold:'#f4c542',red:'#ff3b5c',green:'#00e676',eGrn:'#22b14c',
+  purple:'#a855f7',pink:'#ff6eb4',
+  ink:'#eef2ff',dim:'#6b7a99',mute:'#2d3a52',
+  line:'rgba(255,255,255,0.055)',lineM:'rgba(255,255,255,0.1)',
 };
 
-// ── USUARIOS ──────────────────────────────────────────────
-const USERS = [
-  {id:1,name:'FergunsonTV',role:'admin',av:'FG',color:C.blue,  email:'fergunson@gtahub.mx',tag:'@FergunsonTV',emoji:'📺'},
-  {id:2,name:'Volter',     role:'admin',av:'VL',color:C.gold,  email:'volter@gtahub.mx',   tag:'@Volter',     emoji:'⚡'},
-  {id:3,name:'Kevinagre',  role:'admin',av:'KA',color:C.eGrn,  email:'kevinagre@gtahub.mx',tag:'@Kevinagre',  emoji:'🎮'},
-  {id:4,name:'MeDed',      role:'mkt',  av:'MD',color:C.purple,email:'meded@gtahub.mx',    tag:'@MeDed',      emoji:'🎯'},
-  {id:5,name:'E.Yaaami',   role:'mkt',  av:'EY',color:C.pink,  email:'yaaami@gtahub.mx',   tag:'@E.Yaaami',   emoji:'✨'},
+// ── DATA ─────────────────────────────────────────────
+const USERS=[
+  {id:1,name:'FergunsonTV',role:'admin',av:'FG',color:C.blue,  tag:'@FergunsonTV',emoji:'📺'},
+  {id:2,name:'Volter',     role:'admin',av:'VL',color:C.gold,  tag:'@Volter',     emoji:'⚡'},
+  {id:3,name:'Kevinagre',  role:'admin',av:'KA',color:C.eGrn,  tag:'@Kevinagre',  emoji:'🎮'},
+  {id:4,name:'MeDed',      role:'mkt',  av:'MD',color:C.purple,tag:'@MeDed',      emoji:'🎯'},
+  {id:5,name:'E.Yaaami',   role:'mkt',  av:'EY',color:C.pink,  tag:'@E.Yaaami',   emoji:'✨'},
 ];
-const ROLE_CFG = {
-  admin:{label:'Admin / Staff',  color:C.gold,   Icon:IC.Shield, bg:`${C.gold}18`,   border:`${C.gold}30`},
-  mkt:  {label:'Usuario de MKT', color:C.purple, Icon:IC.Star,   bg:`${C.purple}18`, border:`${C.purple}30`},
+const ROLE={
+  admin:{label:'Admin / Staff',  color:C.gold,  Icon:(s)=>IC.Shield(s,C.gold)},
+  mkt:  {label:'Usuario de MKT', color:C.purple,Icon:(s)=>IC.Star(s,C.purple)},
 };
-const DAYS  = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-const WEEKS = ['Semana 1','Semana 2','Semana 3','Semana 4'];
-
-const MOCK = [
-  {id:1,title:'Reel: Top 5 misiones épicas',type:'reel',author:'MeDed',av:'MD',acColor:C.purple,status:'pending',
-   week:'Semana 1',day:'Lunes',time:'18:00',caption:'¿Cuál fue tu misión favorita? 🎮\n¡Comenta y gana HUBCoins! 👇\n\n#GTAHUB #GTA5 #Gaming',
-   img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',
-   hashtags:['#GTAHUB','#GTA5','#Gaming','#MX'],cta:'Únete → link en bio',target:'Gamers 18–28, México',platform:'Instagram Reels',date:'15 May 2026',notes:'',reach:'12,000–18,000',budget:null},
-  {id:2,title:'Post: Evento Robbery ×2',type:'post',author:'E.Yaaami',av:'EY',acColor:C.pink,status:'approved',
-   week:'Semana 1',day:'Miércoles',time:'20:00',caption:'🚨 EVENTO ESPECIAL HOY 🚨\nRobbery ×2 toda la noche\n⏰ 8pm – 12am CST',
-   img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=500&fit=crop',
-   hashtags:['#GTAHUB','#Evento','#GTA'],cta:'Actívate en el servidor',target:'Comunidad 16–35',platform:'Instagram + Stories',date:'14 May 2026',notes:'Aprobado por Volter ✓',reach:'8,000–12,000',budget:null},
-  {id:3,title:'Story: Poll ¿Tu rol favorito?',type:'story',author:'MeDed',av:'MD',acColor:C.purple,status:'review',
-   week:'Semana 1',day:'Viernes',time:'14:00',caption:'¿Cuál es tu rol favorito en GTAHUB? Vota 👆',
-   img:'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=500&fit=crop',
-   hashtags:['#GTAHUB','#Poll'],cta:'Vota en la story',target:'Toda la comunidad',platform:'Instagram Stories',date:'16 May 2026',notes:'Ajustar diseño del poll.',reach:'6,000–10,000',budget:null},
-  {id:4,title:'Video: Highlight del streamer',type:'video',author:'E.Yaaami',av:'EY',acColor:C.pink,status:'rejected',
-   week:'Semana 2',day:'Martes',time:'19:00',caption:'¡El momento del siglo en GTAHUB! 🔥',
-   img:'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=500&fit=crop',
-   hashtags:['#GTAHUB','#Clip'],cta:'Síguenos para más clips',target:'Fans streamers',platform:'Instagram Reels',date:'20 May 2026',notes:'Re-grabar en 1080p mínimo.',reach:'15,000–25,000',budget:null},
-  {id:5,title:'Carrusel: Guía de roles',type:'carousel',author:'MeDed',av:'MD',acColor:C.purple,status:'pending',
-   week:'Semana 2',day:'Jueves',time:'12:00',caption:'Conoce todos los roles 📋\nDesliza para ver más →',
-   img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=500&fit=crop',
-   hashtags:['#GTAHUB','#Guía','#Roleplay'],cta:'Regístrate - link en bio',target:'Nuevos jugadores 16–25',platform:'Instagram Carrusel',date:'22 May 2026',notes:'',reach:'20,000–35,000',budget:500},
+const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const WEEKS=['Semana 1','Semana 2','Semana 3','Semana 4'];
+const MOCK=[
+  {id:1,title:'Reel: Top 5 misiones épicas',type:'reel',author:'MeDed',av:'MD',status:'pending',week:'Semana 1',day:'Lunes',time:'18:00',caption:'¿Cuál fue tu misión favorita? 🎮\n¡Comenta y gana HUBCoins! 👇\n\n#GTAHUB #GTA5 #Gaming',img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#GTA5','#Gaming','#MX'],cta:'Únete → link en bio',target:'Gamers 18–28, México',platform:'Instagram Reels',date:'15 May 2026',notes:'',reach:'12,000–18,000',budget:null},
+  {id:2,title:'Post: Evento Robbery ×2',type:'post',author:'E.Yaaami',av:'EY',status:'approved',week:'Semana 1',day:'Miércoles',time:'20:00',caption:'🚨 EVENTO ESPECIAL HOY 🚨\nRobbery ×2 toda la noche\n⏰ 8pm – 12am CST',img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Evento','#GTA'],cta:'Actívate en el servidor',target:'Comunidad 16–35',platform:'Instagram + Stories',date:'14 May 2026',notes:'Aprobado por Volter ✓',reach:'8,000–12,000',budget:null},
+  {id:3,title:'Story: Poll ¿Tu rol favorito?',type:'story',author:'MeDed',av:'MD',status:'review',week:'Semana 1',day:'Viernes',time:'14:00',caption:'¿Cuál es tu rol favorito en GTAHUB? Vota 👆',img:'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Poll'],cta:'Vota en la story',target:'Toda la comunidad',platform:'Instagram Stories',date:'16 May 2026',notes:'Ajustar diseño del poll.',reach:'6,000–10,000',budget:null},
+  {id:4,title:'Video: Highlight del streamer',type:'video',author:'E.Yaaami',av:'EY',status:'rejected',week:'Semana 2',day:'Martes',time:'19:00',caption:'¡El momento del siglo en GTAHUB! 🔥',img:'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Clip'],cta:'Síguenos para más clips',target:'Fans streamers',platform:'Instagram Reels',date:'20 May 2026',notes:'Re-grabar en 1080p mínimo.',reach:'15,000–25,000',budget:null},
+  {id:5,title:'Carrusel: Guía de roles',type:'carousel',author:'MeDed',av:'MD',status:'pending',week:'Semana 2',day:'Jueves',time:'12:00',caption:'Conoce todos los roles 📋\nDesliza para ver más →',img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Guía','#Roleplay'],cta:'Regístrate - link en bio',target:'Nuevos jugadores 16–25',platform:'Instagram Carrusel',date:'22 May 2026',notes:'',reach:'20,000–35,000',budget:500},
 ];
-const TARGETS = [
-  {id:1,name:'Gamers MX Core',  age:'18–28',gender:'70% M / 30% F',interests:['GTA Online','Roleplay','Twitch','Discord'],   location:'CDMX, MTY, GDL',size:'180K',platform:'Instagram + TikTok',color:C.blueB},
-  {id:2,name:'Comunidad Activa',age:'16–35',gender:'65% M / 35% F',interests:['Gaming','Comunidades','Servidores RP'],        location:'México Nacional', size:'320K',platform:'Instagram + FB',  color:C.eGrn},
-  {id:3,name:'Fans Streamers',  age:'15–25',gender:'55% M / 45% F',interests:['Twitch','YouTube Gaming','Clips'],             location:'LATAM',           size:'500K',platform:'TikTok + Reels', color:C.purple},
-  {id:4,name:'Jugadores Nuevos',age:'16–22',gender:'60% M / 40% F',interests:['GTA','Juegos Online','Roleplay'],              location:'México',          size:'90K', platform:'TikTok + Reels', color:C.gold},
+const TARGETS=[
+  {id:1,name:'Gamers MX Core',  age:'18–28',gender:'70% M / 30% F',interests:['GTA Online','Roleplay','Twitch','Discord'],location:'CDMX, MTY, GDL',size:'180K',platform:'Instagram + TikTok',color:C.blueB},
+  {id:2,name:'Comunidad Activa',age:'16–35',gender:'65% M / 35% F',interests:['Gaming','Comunidades','Servidores RP'],location:'México Nacional',size:'320K',platform:'Instagram + FB',color:C.eGrn},
+  {id:3,name:'Fans Streamers',  age:'15–25',gender:'55% M / 45% F',interests:['Twitch','YouTube Gaming','Clips'],location:'LATAM',size:'500K',platform:'TikTok + Reels',color:C.purple},
+  {id:4,name:'Jugadores Nuevos',age:'16–22',gender:'60% M / 40% F',interests:['GTA','Juegos Online','Roleplay'],location:'México',size:'90K',platform:'TikTok + Reels',color:C.gold},
 ];
-const CAMPAIGNS = [
-  {id:1,name:'Lanzamiento Semana 1',budget:2500,spent:1840,platform:'Instagram',        status:'active',    reach:'42,000', startDate:'May 13',endDate:'May 19',color:C.blueB},
-  {id:2,name:'Evento Robbery ×2',   budget:800, spent:800, platform:'Instagram Stories',status:'completed', reach:'15,000', startDate:'May 14',endDate:'May 14',color:C.eGrn},
-  {id:3,name:'Captación Roleplay',  budget:3000,spent:0,   platform:'TikTok + Reels',   status:'scheduled', reach:'80,000+',startDate:'May 20',endDate:'May 26',color:C.purple},
+const CAMPS=[
+  {id:1,name:'Lanzamiento Semana 1',budget:2500,spent:1840,platform:'Instagram',       status:'active',   reach:'42,000', startDate:'May 13',endDate:'May 19',color:C.blueB},
+  {id:2,name:'Evento Robbery ×2',   budget:800, spent:800, platform:'Instagram Stories',status:'completed',reach:'15,000', startDate:'May 14',endDate:'May 14',color:C.eGrn},
+  {id:3,name:'Captación Roleplay',  budget:3000,spent:0,   platform:'TikTok + Reels',  status:'scheduled',reach:'80,000+',startDate:'May 20',endDate:'May 26',color:C.purple},
 ];
-const STATUS = {
-  pending: {label:'Pendiente',  color:C.cyan,  bg:`rgba(0,212,255,.12)`, Icon:IC.Clock},
-  approved:{label:'Aprobado',   color:C.green, bg:`rgba(0,230,118,.12)`, Icon:IC.CheckCircle},
-  review:  {label:'En Revisión',color:C.gold,  bg:`rgba(244,197,66,.12)`,Icon:IC.Eye},
-  rejected:{label:'Rechazado',  color:C.red,   bg:`rgba(255,59,92,.12)`, Icon:IC.XCircle},
+const STS={
+  pending: {label:'Pendiente',  color:C.cyan,  bg:'rgba(0,212,255,.12)', icon:(s)=>IC.Clock(s,C.cyan)},
+  approved:{label:'Aprobado',   color:C.green, bg:'rgba(0,230,118,.12)', icon:(s)=>IC.CheckCircle(s,C.green)},
+  review:  {label:'En Revisión',color:C.gold,  bg:'rgba(244,197,66,.12)',icon:(s)=>IC.Eye(s,C.gold)},
+  rejected:{label:'Rechazado',  color:C.red,   bg:'rgba(255,59,92,.12)', icon:(s)=>IC.XCircle(s,C.red)},
 };
-const TYPE = {
-  reel:    {label:'Reel',    color:C.purple,Icon:IC.Film},
-  post:    {label:'Post',    color:C.blueB, Icon:IC.Camera},
-  story:   {label:'Story',   color:C.red,   Icon:IC.Radio},
-  video:   {label:'Video',   color:C.gold,  Icon:IC.Play},
-  carousel:{label:'Carrusel',color:C.eGrn, Icon:IC.Layers},
+const TPS={
+  reel:    {label:'Reel',    color:C.purple,icon:(s)=>IC.Film(s,C.purple)},
+  post:    {label:'Post',    color:C.blueB, icon:(s)=>IC.Camera(s,C.blueB)},
+  story:   {label:'Story',   color:C.red,   icon:(s)=>IC.Radio(s,C.red)},
+  video:   {label:'Video',   color:C.gold,  icon:(s)=>IC.Play(s,C.gold)},
+  carousel:{label:'Carrusel',color:C.eGrn, icon:(s)=>IC.Layers(s,C.eGrn)},
 };
 
-// ── API ───────────────────────────────────────────────────
-const api = {
-  async get(){
-    if(!SHEETS_API_URL) return MOCK;
-    try{const r=await fetch(SHEETS_API_URL+'?action=getProposals');const d=await r.json();return d.proposals||[];}catch{return MOCK;}
-  },
-  async add(p){
-    if(!SHEETS_API_URL) return{id:Date.now()};
-    try{const r=await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'addProposal',proposal:p})});return r.json();}catch{return{id:Date.now()};}
-  },
-  async update(id,status,notes){
-    if(!SHEETS_API_URL) return{success:true};
-    try{const r=await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'updateStatus',id,status,notes})});return r.json();}catch{return{success:true};}
-  },
+// ── API ───────────────────────────────────────────────
+const api={
+  async get(){if(!SHEETS_API_URL)return MOCK;try{const r=await fetch(SHEETS_API_URL+'?action=getProposals');const d=await r.json();return d.proposals||[];}catch{return MOCK;}},
+  async add(p){if(!SHEETS_API_URL)return{id:Date.now()};try{const r=await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'addProposal',proposal:p})});return r.json();}catch{return{id:Date.now()};}},
+  async update(id,status,notes){if(!SHEETS_API_URL)return{};try{await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'updateStatus',id,status,notes})});}catch{}},
 };
 
-// ── LAYOUT UTILS ──────────────────────────────────────────
+// ── LAYOUT ────────────────────────────────────────────
 const r=(x={})=>({display:'flex',alignItems:'center',...x});
-const c=(x={})=>({display:'flex',flexDirection:'column',...x});
+const co=(x={})=>({display:'flex',flexDirection:'column',...x});
 const e=React.createElement;
 
-// ── SHARED COMPONENTS ─────────────────────────────────────
-function Avatar({initials,size=36,color=C.blue,glow=false}){
+// ── SHARED UI ─────────────────────────────────────────
+function Av({init,size=36,color=C.blue,glow}){
   return e('div',{style:{width:size,height:size,borderRadius:'50%',flexShrink:0,
     background:`linear-gradient(135deg,${color}ee,${color}66)`,
     display:'flex',alignItems:'center',justifyContent:'center',
-    fontSize:size*.32,fontWeight:800,color:'#fff',letterSpacing:-.5,
-    boxShadow:glow?`0 0 20px ${color}55`:undefined}},initials);
+    fontSize:size*.32,fontWeight:800,color:'#fff',
+    boxShadow:glow?`0 0 18px ${color}55`:undefined}},init);
 }
-function SBadge({status}){
-  const s=STATUS[status]||STATUS.pending;
-  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:5,
-    padding:'4px 10px',borderRadius:999,fontSize:11,fontWeight:700,letterSpacing:.3,
-    background:s.bg,color:s.color,border:`1px solid ${s.color}44`}},
-    e(s.Icon,{size:10}),' ',s.label);
+function SBadge({s}){
+  const st=STS[s]||STS.pending;
+  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:999,fontSize:11,fontWeight:700,background:st.bg,color:st.color,border:`1px solid ${st.color}44`}},st.icon(10),' ',st.label);
 }
-function TBadge({type}){
-  const t=TYPE[type]||TYPE.post;
-  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:4,
-    padding:'3px 8px',borderRadius:999,fontSize:10,fontWeight:700,
-    background:`${t.color}15`,color:t.color,border:`1px solid ${t.color}30`}},
-    e(t.Icon,{size:9}),' ',t.label);
+function TBadge({t}){
+  const tp=TPS[t]||TPS.post;
+  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 8px',borderRadius:999,fontSize:10,fontWeight:700,background:`${tp.color}15`,color:tp.color,border:`1px solid ${tp.color}30`}},tp.icon(9),' ',tp.label);
 }
-function Pill({label,color=C.dim}){
-  return e('span',{style:{padding:'3px 9px',borderRadius:999,fontSize:10,fontWeight:600,
-    background:`${color}15`,color,border:`1px solid ${color}25`}},label);
+function Pill({label,color}){return e('span',{style:{padding:'3px 9px',borderRadius:999,fontSize:10,fontWeight:600,background:`${color}15`,color,border:`1px solid ${color}25`}},label);}
+function Btn({children,onClick,v='def',sm,full,dis,sx={}}){
+  const p=sm?'7px 14px':'11px 22px',fs=sm?11:13;
+  const vs={pri:{background:`linear-gradient(135deg,${C.blue},${C.blueB})`,color:'#fff',boxShadow:`0 6px 20px ${C.blue}40`},suc:{background:`linear-gradient(135deg,${C.eGrn},${C.green})`,color:'#fff'},dan:{background:`linear-gradient(135deg,${C.red},#ff8096)`,color:'#fff'},war:{background:`linear-gradient(135deg,${C.gold},#ffe07d)`,color:'#1a1000'},def:{background:C.bg3,color:C.ink,border:`1px solid ${C.lineM}`}};
+  return e('button',{className:'btn-ani',onClick,disabled:dis,style:{display:'inline-flex',alignItems:'center',gap:7,cursor:dis?'not-allowed':'pointer',border:'none',borderRadius:12,fontWeight:700,fontSize:fs,padding:p,opacity:dis?.6:1,width:full?'100%':undefined,justifyContent:full?'center':undefined,...(vs[v]||vs.def),...sx}},children);
 }
-function Btn({children,onClick,v='default',sm,full,style:sx={}}){
-  const p=sm?'7px 14px':'11px 22px', fs=sm?11:13;
-  const vars={
-    primary:{background:`linear-gradient(135deg,${C.blue},${C.blueB})`,color:'#fff',boxShadow:`0 6px 20px ${C.blue}40`},
-    success:{background:`linear-gradient(135deg,${C.eGrn},${C.green})`,color:'#fff',boxShadow:`0 6px 20px ${C.eGrn}30`},
-    danger: {background:`linear-gradient(135deg,${C.red},#ff8096)`,    color:'#fff',boxShadow:`0 6px 20px ${C.red}30`},
-    warning:{background:`linear-gradient(135deg,${C.gold},#ffe080)`,   color:'#1a1000'},
-    default:{background:C.bg3,color:C.ink,border:`1px solid ${C.lineM}`},
-  };
-  return e('button',{className:'btn-p',onClick,style:{
-    display:'inline-flex',alignItems:'center',gap:7,cursor:'pointer',
-    border:'none',borderRadius:12,fontWeight:700,fontSize:fs,padding:p,
-    width:full?'100%':undefined,justifyContent:full?'center':undefined,
-    ...(vars[v]||vars.default),...sx}},children);
+function Card({children,sx={},onClick,hover}){
+  return e('div',{onClick,className:hover?'card-hover':undefined,style:{background:C.card,border:`1px solid ${C.line}`,borderRadius:20,boxShadow:'0 4px 20px rgba(0,0,0,.3)',...sx}},children);
 }
-function Card({children,style:sx={},onClick,hover}){
-  return e('div',{onClick,className:hover?'card-h':undefined,style:{
-    background:C.card,border:`1px solid ${C.line}`,borderRadius:20,
-    boxShadow:'0 4px 20px rgba(0,0,0,.25)',...sx}},children);
-}
-function Stat({label,value,color=C.cyan,Icon:Ico}){
-  return e(Card,{style:{padding:'20px',flex:1,minWidth:0,position:'relative',overflow:'hidden'}},
-    e('div',{style:{position:'absolute',top:-20,right:-20,width:80,height:80,borderRadius:'50%',background:`${color}08`}}),
+function Stat({label,value,color,IcoFn}){
+  return e(Card,{sx:{padding:'20px',flex:1,minWidth:0,position:'relative',overflow:'hidden'}},
+    e('div',{style:{position:'absolute',top:-20,right:-20,width:70,height:70,borderRadius:'50%',background:`${color}08`}}),
     e('div',{style:r({justifyContent:'space-between',marginBottom:12})},
       e('span',{style:{fontSize:10,color:C.dim,fontWeight:700,textTransform:'uppercase',letterSpacing:1.2}},label),
-      e('div',{style:{width:32,height:32,borderRadius:10,background:`${color}18`,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${color}25`}},
-        e(Ico,{size:15,color}))),
+      e('div',{style:{width:32,height:32,borderRadius:10,background:`${color}18`,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${color}25`}},IcoFn(15))),
     e('div',{style:{fontSize:28,fontWeight:900,color,letterSpacing:-1.5}},value));
 }
-function Notif({msg,type,onClose}){
+function Toast({msg,type,onClose}){
   const col={success:C.green,error:C.red,info:C.cyan,warning:C.gold}[type]||C.cyan;
   return e('div',{style:{position:'fixed',top:20,right:20,zIndex:9999,animation:'fadeUp .2s ease',
-    background:`${C.card}f0`,backdropFilter:'blur(20px)',border:`1px solid ${col}45`,borderRadius:16,
-    padding:'13px 18px',boxShadow:`0 10px 40px rgba(0,0,0,.6),0 0 0 1px ${col}20`,
-    display:'flex',alignItems:'center',gap:12,minWidth:280}},
-    e('div',{style:{width:8,height:8,borderRadius:'50%',background:col,flexShrink:0,boxShadow:`0 0 10px ${col}`}}),
+    background:`${C.card}f2`,backdropFilter:'blur(20px)',border:`1px solid ${col}45`,borderRadius:16,
+    padding:'13px 18px',boxShadow:`0 10px 40px rgba(0,0,0,.7)`,display:'flex',alignItems:'center',gap:12,minWidth:280}},
+    e('div',{style:{width:8,height:8,borderRadius:'50%',background:col,boxShadow:`0 0 10px ${col}`,flexShrink:0}}),
     e('span',{style:{fontSize:13,fontWeight:600,color:C.ink,flex:1}},msg),
-    e('button',{onClick:onClose,style:{background:'none',border:'none',cursor:'pointer',color:C.dim,display:'flex',padding:0}},e(IC.X,{size:14})));
+    e('button',{onClick:onClose,style:{background:'none',border:'none',cursor:'pointer',color:C.dim,display:'flex',padding:0}},IC.X(14,C.dim)));
 }
 
-// ── IG PREVIEW ────────────────────────────────────────────
-function IGPreview({proposal}){
+// ── IG PREVIEW ────────────────────────────────────────
+function IGPreview({p}){
   const [liked,setLiked]=useState(false);
   const [saved,setSaved]=useState(false);
-  if(!proposal) return null;
-  const isReel=proposal.type==='reel'||proposal.type==='video';
-  const isStory=proposal.type==='story';
-  return e('div',{style:c({alignItems:'center',gap:10})},
-    e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase',fontWeight:700}},
-      'Preview · ',(proposal.platform||'Instagram')),
-    e('div',{style:{width:242,background:'#070707',borderRadius:42,padding:5,
-      boxShadow:'0 30px 80px rgba(0,0,0,.95),0 0 0 1px #1a1a1a,0 0 0 3px #080808'}},
+  if(!p) return null;
+  const isReel=p.type==='reel'||p.type==='video';
+  const isStory=p.type==='story';
+  return e('div',{style:co({alignItems:'center',gap:10})},
+    e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase',fontWeight:700}},'Preview · ',(p.platform||'Instagram')),
+    e('div',{style:{width:240,background:'#060606',borderRadius:42,padding:5,boxShadow:'0 30px 80px rgba(0,0,0,.9),0 0 0 1px #181818'}},
       e('div',{style:{height:26,display:'flex',justifyContent:'center',alignItems:'center',paddingTop:3}},
         e('div',{style:{width:72,height:21,background:'#000',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px'}},
           e('span',{style:{fontSize:8,color:'#fff',fontFamily:'monospace'}},'9:41'),
@@ -271,336 +226,263 @@ function IGPreview({proposal}){
             e('div',null,
               e('div',{style:{fontSize:9.5,fontWeight:800,color:'#000',fontFamily:'sans-serif',lineHeight:1}},'gtahub.mx'),
               e('div',{style:{fontSize:7.5,color:'#888',fontFamily:'sans-serif'}},'Patrocinado'))),
-          e('div',{style:r({gap:6})},e('span',{style:{fontSize:9,fontWeight:700,color:'#1877f2'}},'Seguir'),e(IC.MoreH,{size:13,color:'#000'}))),
+          e('div',{style:r({gap:6})},e('span',{style:{fontSize:9,fontWeight:700,color:'#1877f2'}},'Seguir'),IC.MoreH(13,'#000'))),
         e('div',{style:{position:'relative',width:'100%',paddingBottom:isStory?'177%':'125%',overflow:'hidden',background:'#e0e0e0'}},
-          e('img',{src:proposal.img,alt:'',style:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}),
+          e('img',{src:p.img,alt:'',style:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}),
           isReel&&e('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.2)'}},
             e('div',{style:{width:42,height:42,background:'rgba(255,255,255,.92)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}},
-              e(IC.Play,{size:16,color:'#000',fill:'#000'}))),
-          e('div',{style:{position:'absolute',top:7,right:7,background:'rgba(0,0,0,.7)',borderRadius:5,padding:'2px 6px',fontSize:7,color:'#fff',fontWeight:900,letterSpacing:1.5}},'GTAHUB'),
-          proposal.type==='carousel'&&e('div',{style:{position:'absolute',top:7,left:7,background:'rgba(0,0,0,.65)',borderRadius:4,padding:'2px 5px',fontSize:7,color:'#fff'}},'1/5')),
+              IC.Play(16,'#000','#000'))),
+          e('div',{style:{position:'absolute',top:7,right:7,background:'rgba(0,0,0,.7)',borderRadius:5,padding:'2px 6px',fontSize:7,color:'#fff',fontWeight:900,letterSpacing:1.5}},'GTAHUB')),
         e('div',{style:{padding:'8px 10px 6px',background:'#fff'}},
           e('div',{style:r({justifyContent:'space-between',marginBottom:5})},
             e('div',{style:r({gap:12})},
               e('button',{onClick:()=>setLiked(!liked),style:{background:'none',border:'none',cursor:'pointer',padding:0}},
-                e(IC.Heart,{size:18,fill:liked?'#ed4956':'none',color:liked?'#ed4956':'#262626',strokeWidth:1.5})),
-              e(IC.MessageCircle,{size:18,color:'#262626',strokeWidth:1.5}),
-              e(IC.Send,{size:18,color:'#262626',strokeWidth:1.5})),
+                React.createElement(IconMulti,{size:18,color:liked?'#ed4956':'#262626',strokeWidth:1.5,paths:['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']})),
+              IC.MessageCircle(18,'#262626'),
+              IC.Send(18,'#262626')),
             e('button',{onClick:()=>setSaved(!saved),style:{background:'none',border:'none',cursor:'pointer',padding:0}},
-              e(IC.Bookmark,{size:18,fill:saved?'#262626':'none',color:'#262626',strokeWidth:1.5}))),
+              IC.Bookmark(18,'#262626'))),
           e('div',{style:{fontSize:9.5,fontWeight:800,color:'#000',fontFamily:'sans-serif',marginBottom:2}},(1247+(liked?1:0)).toLocaleString(),' Me gusta'),
-          e('div',{style:{fontSize:9,color:'#262626',fontFamily:'sans-serif',lineHeight:1.5}},e('span',{style:{fontWeight:800}},'gtahub.mx'),' ',proposal.caption.split('\n')[0].substring(0,46),(proposal.caption.length>46?'…':'')),
-          proposal.hashtags?.length>0&&e('div',{style:{fontSize:8,color:'#00376b',marginTop:1,fontFamily:'sans-serif'}},proposal.hashtags.slice(0,3).join(' ')),
-          e('div',{style:{fontSize:7.5,color:'#a8a8a8',margin:'2px 0 5px',fontFamily:'sans-serif',textTransform:'uppercase',letterSpacing:.5}},proposal.date||'Hace 2 horas')))),
-    e('div',{style:c({gap:6,width:'100%',maxWidth:242})},
-      proposal.cta&&e('div',{style:{background:`${C.cyan}10`,border:`1px solid ${C.cyan}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},
-        e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'CTA'),
-        e('div',{style:{fontSize:11,fontWeight:700,color:C.cyan,marginTop:1}},proposal.cta)),
-      proposal.reach&&e('div',{style:{background:`${C.eGrn}10`,border:`1px solid ${C.eGrn}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},
-        e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'Alcance est.'),
-        e('div',{style:{fontSize:13,fontWeight:800,color:C.eGrn,marginTop:1}},proposal.reach))));
+          e('div',{style:{fontSize:9,color:'#262626',fontFamily:'sans-serif',lineHeight:1.5}},e('span',{style:{fontWeight:800}},'gtahub.mx'),' ',p.caption.split('\n')[0].substring(0,46)),
+          p.hashtags?.length>0&&e('div',{style:{fontSize:8,color:'#00376b',marginTop:1,fontFamily:'sans-serif'}},p.hashtags.slice(0,3).join(' ')),
+          e('div',{style:{fontSize:7.5,color:'#a8a8a8',margin:'2px 0 5px',fontFamily:'sans-serif',textTransform:'uppercase',letterSpacing:.5}},p.date)))),
+    e('div',{style:co({gap:6,width:'100%',maxWidth:240})},
+      p.cta&&e('div',{style:{background:`${C.cyan}10`,border:`1px solid ${C.cyan}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'CTA'),e('div',{style:{fontSize:11,fontWeight:700,color:C.cyan,marginTop:1}},p.cta)),
+      p.reach&&e('div',{style:{background:`${C.eGrn}10`,border:`1px solid ${C.eGrn}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'Alcance est.'),e('div',{style:{fontSize:13,fontWeight:800,color:C.eGrn,marginTop:1}},p.reach))));
 }
 
-// ── SIDEBAR ───────────────────────────────────────────────
+// ── SIDEBAR ───────────────────────────────────────────
 const NAV=[
-  {id:'dashboard', label:'Dashboard',     Icon:IC.Dashboard},
-  {id:'parrilla',  label:'Parrilla',       Icon:IC.Calendar},
-  {id:'proposals', label:'Propuestas',     Icon:IC.FileText},
-  {id:'targets',   label:'Targets',        Icon:IC.Target},
-  {id:'ads',       label:'Ads & Campañas', Icon:IC.Megaphone},
+  {id:'dashboard',label:'Dashboard',    fn:(s,c)=>IC.Dashboard(s,c)},
+  {id:'parrilla', label:'Parrilla',      fn:(s,c)=>IC.Calendar(s,c)},
+  {id:'proposals',label:'Propuestas',   fn:(s,c)=>IC.FileText(s,c)},
+  {id:'targets',  label:'Targets',      fn:(s,c)=>IC.Target(s,c)},
+  {id:'ads',      label:'Ads & Campañas',fn:(s,c)=>IC.Megaphone(s,c)},
 ];
-function Sidebar({view,setView,user,setUser,proposals}){
-  const pending=proposals.filter(p=>p.status==='pending').length;
-  const cfg=ROLE_CFG[user.role]||ROLE_CFG.mkt;
-  return e('nav',{style:{width:224,background:`linear-gradient(180deg,${C.bg2},${C.bg})`,
-    borderRight:`1px solid ${C.line}`,display:'flex',flexDirection:'column',flexShrink:0,height:'100vh',overflowY:'auto'}},
+function Sidebar({view,setView,user,setUser,props}){
+  const pending=(props||[]).filter(p=>p.status==='pending').length;
+  const rol=ROLE[user.role]||ROLE.mkt;
+  return e('nav',{style:{width:224,background:`linear-gradient(180deg,${C.bg2},${C.bg})`,borderRight:`1px solid ${C.line}`,display:'flex',flexDirection:'column',flexShrink:0,height:'100vh',overflowY:'auto'}},
     e('div',{style:{padding:'22px 18px 18px',borderBottom:`1px solid ${C.line}`}},
       e('div',{style:r({gap:12})},
-        e('div',{className:'logo-g',style:{width:40,height:40,borderRadius:13,background:`linear-gradient(135deg,${C.blue},${C.cyan})`,display:'flex',alignItems:'center',justifyContent:'center'}},
+        e('div',{className:'logo-pulse',style:{width:40,height:40,borderRadius:13,background:`linear-gradient(135deg,${C.blue},${C.cyan})`,display:'flex',alignItems:'center',justifyContent:'center'}},
           e('span',{style:{fontSize:18,fontWeight:900,color:'#fff',letterSpacing:-1}},'G')),
         e('div',null,
           e('div',{style:{fontSize:15,fontWeight:900,color:C.ink,letterSpacing:-.5}},'GTAHUB'),
           e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase'}},'by Eleevate MX')))),
     e('div',{style:{padding:'12px 14px',borderBottom:`1px solid ${C.line}`}},
-      e('div',{style:{display:'flex',alignItems:'center',gap:7,padding:'7px 11px',borderRadius:10,background:cfg.bg,border:`1px solid ${cfg.border}`}},
-        e(cfg.Icon,{size:11,color:cfg.color}),
-        e('span',{style:{fontSize:10,fontWeight:700,color:cfg.color,textTransform:'uppercase',letterSpacing:.8}},cfg.label))),
+      e('div',{style:{display:'flex',alignItems:'center',gap:7,padding:'7px 11px',borderRadius:10,background:`${rol.color}18`,border:`1px solid ${rol.color}30`}},
+        rol.Icon(11),e('span',{style:{fontSize:10,fontWeight:700,color:rol.color,textTransform:'uppercase',letterSpacing:.8}},rol.label))),
     e('div',{style:{flex:1,padding:'12px 10px',display:'flex',flexDirection:'column',gap:2}},
       NAV.map(n=>{
         const active=view===n.id;
         const badge=n.id==='proposals'&&pending>0&&user.role==='admin';
-        return e('button',{key:n.id,className:'nav-btn',onClick:()=>setView(n.id),style:{
-          display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',
-          background:active?`${C.blue}22`:'transparent',
-          border:active?`1px solid ${C.blue}35`:'1px solid transparent',
-          color:active?C.blueB:C.dim,fontWeight:active?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
-          e(n.Icon,{size:15,color:active?C.blueB:C.dim}),
+        return e('button',{key:n.id,className:'nav-btn',onClick:()=>setView(n.id),style:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',background:active?`${C.blue}22`:'transparent',border:active?`1px solid ${C.blue}35`:'1px solid transparent',color:active?C.blueB:C.dim,fontWeight:active?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
+          n.fn(15,active?C.blueB:C.dim),
           e('span',{style:{flex:1}},n.label),
           badge&&e('span',{style:{background:C.red,color:'#fff',borderRadius:999,fontSize:9,fontWeight:900,padding:'2px 7px',boxShadow:`0 0 8px ${C.red}55`}},pending));
       }),
-      user.role==='mkt'&&e('button',{className:'nav-btn',onClick:()=>setView('new-proposal'),style:{
-        display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',marginTop:4,
-        background:view==='new-proposal'?`${C.purple}22`:'transparent',
-        border:view==='new-proposal'?`1px solid ${C.purple}35`:'1px solid transparent',
-        color:view==='new-proposal'?C.purple:C.dim,fontWeight:view==='new-proposal'?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
-        e(IC.Plus,{size:15}),e('span',null,'Nueva Propuesta'))),
+      user.role==='mkt'&&e('button',{className:'nav-btn',onClick:()=>setView('new-proposal'),style:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',background:view==='new-proposal'?`${C.purple}22`:'transparent',border:view==='new-proposal'?`1px solid ${C.purple}35`:'1px solid transparent',color:view==='new-proposal'?C.purple:C.dim,fontWeight:view==='new-proposal'?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
+        IC.Plus(15,view==='new-proposal'?C.purple:C.dim),e('span',null,'Nueva Propuesta'))),
     e('div',{style:{padding:'14px',borderTop:`1px solid ${C.line}`}},
       e('div',{style:{padding:'10px 12px',borderRadius:14,background:C.bg3,border:`1px solid ${C.line}`,marginBottom:8}},
         e('div',{style:r({gap:10,marginBottom:8})},
-          e(Avatar,{initials:user.av,color:user.color,size:36}),
+          e(Av,{init:user.av,color:user.color,size:36}),
           e('div',{style:{flex:1,minWidth:0}},
             e('div',{style:{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},user.emoji,' ',user.name),
             e('div',{style:{fontSize:10,color:C.dim,marginTop:1}},user.tag))),
-        e('button',{onClick:()=>setUser(null),style:{display:'flex',alignItems:'center',gap:6,width:'100%',padding:'6px 8px',borderRadius:8,
-          background:'transparent',border:`1px solid ${C.lineM}`,cursor:'pointer',color:C.dim,fontSize:11,fontWeight:600,justifyContent:'center',transition:'all .15s'}},
-          e(IC.LogOut,{size:11}),' Cerrar sesión'))));
+        e('button',{onClick:()=>setUser(null),style:{display:'flex',alignItems:'center',gap:6,width:'100%',padding:'6px 8px',borderRadius:8,background:'transparent',border:`1px solid ${C.lineM}`,cursor:'pointer',color:C.dim,fontSize:11,fontWeight:600,justifyContent:'center',transition:'all .15s'}},
+          IC.LogOut(11,C.dim),' Cerrar sesión'))));
 }
 
-// ── LOGIN ─────────────────────────────────────────────────
-function LoginPage({onLogin}){
+// ── LOGIN ─────────────────────────────────────────────
+function Login({onLogin}){
   const [sel,setSel]=useState(null);
   const admins=USERS.filter(u=>u.role==='admin');
   const mkts=USERS.filter(u=>u.role==='mkt');
-  const UBtn=(u)=>e('button',{key:u.id,onClick:()=>setSel(u),className:'btn-p',style:{
-    display:'flex',alignItems:'center',gap:13,padding:'13px 15px',
-    background:sel?.id===u.id?`${u.color}18`:C.bg3,
-    border:sel?.id===u.id?`1px solid ${u.color}55`:`1px solid ${C.line}`,
-    borderRadius:14,cursor:'pointer',width:'100%',
-    boxShadow:sel?.id===u.id?`0 8px 24px ${u.color}22`:'none',transition:'all .2s'}},
-    e(Avatar,{initials:u.av,color:u.color,size:40,glow:sel?.id===u.id}),
-    e('div',{style:{textAlign:'left',flex:1}},
-      e('div',{style:{fontSize:14,fontWeight:800,color:C.ink}},u.emoji,' ',u.name),
-      e('div',{style:{fontSize:10,color:C.dim,marginTop:2}},u.tag)),
-    sel?.id===u.id&&e(IC.CheckCircle,{size:17,color:u.color}));
-  return e('div',{style:{minHeight:'100vh',
-    background:`radial-gradient(ellipse at 15% 20%,${C.blue}18 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,${C.purple}12 0%,transparent 50%),${C.bg}`,
-    display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}},
+  const UBtn=(u)=>e('button',{key:u.id,onClick:()=>setSel(u),className:'btn-ani',style:{display:'flex',alignItems:'center',gap:13,padding:'13px 15px',background:sel?.id===u.id?`${u.color}18`:C.bg3,border:sel?.id===u.id?`1px solid ${u.color}55`:`1px solid ${C.line}`,borderRadius:14,cursor:'pointer',width:'100%',boxShadow:sel?.id===u.id?`0 8px 24px ${u.color}22`:'none',transition:'all .2s'}},
+    e(Av,{init:u.av,color:u.color,size:40,glow:sel?.id===u.id}),
+    e('div',{style:{textAlign:'left',flex:1}},e('div',{style:{fontSize:14,fontWeight:800,color:C.ink}},u.emoji,' ',u.name),e('div',{style:{fontSize:10,color:C.dim,marginTop:2}},u.tag)),
+    sel?.id===u.id&&IC.CheckCircle(17,u.color));
+  return e('div',{style:{minHeight:'100vh',background:`radial-gradient(ellipse at 15% 20%,${C.blue}18 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,${C.purple}12 0%,transparent 50%),${C.bg}`,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}},
     e('div',{style:{width:'100%',maxWidth:440}},
       e('div',{style:{textAlign:'center',marginBottom:36}},
         e('div',{style:{display:'flex',justifyContent:'center',marginBottom:18}},
-          e('div',{className:'logo-g',style:{width:72,height:72,borderRadius:22,
-            background:`linear-gradient(135deg,${C.blue},${C.cyan})`,
-            display:'flex',alignItems:'center',justifyContent:'center'}}),
-          e('div',{style:{position:'absolute',marginTop:0}})  ),
-        e('div',{style:{display:'flex',justifyContent:'center',marginBottom:18}},
-          e('div',{style:{width:72,height:72,borderRadius:22,
-            background:`linear-gradient(135deg,${C.blue},${C.cyan})`,
-            display:'flex',alignItems:'center',justifyContent:'center',
-            boxShadow:`0 20px 60px ${C.blue}45,0 0 0 1px ${C.blueB}25`}},
+          e('div',{className:'logo-pulse',style:{width:72,height:72,borderRadius:22,background:`linear-gradient(135deg,${C.blue},${C.cyan})`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 20px 60px ${C.blue}45,0 0 0 1px ${C.blueB}25`}},
             e('span',{style:{fontSize:32,fontWeight:900,color:'#fff',letterSpacing:-2}},'G'))),
         e('div',{style:{fontSize:32,fontWeight:900,color:C.ink,letterSpacing:-1.5}},'GTAHUB'),
         e('div',{style:{fontSize:11,color:C.dim,letterSpacing:3,textTransform:'uppercase',marginTop:5}},'Content Hub · Eleevate MX')),
-      !SHEETS_API_URL&&e('div',{style:{background:`${C.gold}12`,border:`1px solid ${C.gold}30`,borderRadius:12,padding:'9px 16px',marginBottom:20,textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:8}},
-        e(IC.Zap,{size:12,color:C.gold}),e('span',{style:{fontSize:11,color:C.gold,fontWeight:600}},'Modo demo — conecta Google Sheets para datos reales')),
+      !SHEETS_API_URL&&e('div',{style:{background:`${C.gold}12`,border:`1px solid ${C.gold}30`,borderRadius:12,padding:'9px 16px',marginBottom:20,textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:8}},IC.Zap(12,C.gold),e('span',{style:{fontSize:11,color:C.gold,fontWeight:600}},'Modo demo — conecta Google Sheets para datos reales')),
       e('div',{style:{marginBottom:16}},
-        e('div',{style:r({gap:8,marginBottom:10})},
-          e('div',{style:{width:3,height:16,borderRadius:2,background:C.gold}}),
-          e('span',{style:{fontSize:10,fontWeight:700,color:C.gold,textTransform:'uppercase',letterSpacing:1.5}},'Admin / Staff')),
-        e('div',{style:c({gap:7})},admins.map(UBtn))),
-      e('div',{style:{display:'flex',alignItems:'center',gap:12,margin:'16px 0'}},
-        e('div',{style:{flex:1,height:'1px',background:C.line}}),
-        e('span',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:2}},'MKT'),
-        e('div',{style:{flex:1,height:'1px',background:C.line}})),
+        e('div',{style:r({gap:8,marginBottom:10})},e('div',{style:{width:3,height:16,borderRadius:2,background:C.gold}}),e('span',{style:{fontSize:10,fontWeight:700,color:C.gold,textTransform:'uppercase',letterSpacing:1.5}},'Admin / Staff')),
+        e('div',{style:co({gap:7})},admins.map(UBtn))),
+      e('div',{style:{display:'flex',alignItems:'center',gap:12,margin:'16px 0'}},e('div',{style:{flex:1,height:'1px',background:C.line}}),e('span',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:2}},'MKT'),e('div',{style:{flex:1,height:'1px',background:C.line}})),
       e('div',{style:{marginBottom:22}},
-        e('div',{style:r({gap:8,marginBottom:10})},
-          e('div',{style:{width:3,height:16,borderRadius:2,background:C.purple}}),
-          e('span',{style:{fontSize:10,fontWeight:700,color:C.purple,textTransform:'uppercase',letterSpacing:1.5}},'Usuario de MKT')),
-        e('div',{style:c({gap:7})},mkts.map(UBtn))),
-      e('button',{onClick:()=>sel&&onLogin(sel),className:'btn-p',style:{width:'100%',padding:'15px',borderRadius:16,border:'none',
-        cursor:sel?'pointer':'not-allowed',fontWeight:800,fontSize:15,letterSpacing:.3,
-        background:sel?`linear-gradient(135deg,${sel.color},${sel.color}bb)`:C.bg3,
-        color:sel?'#fff':C.mute,boxShadow:sel?`0 16px 40px ${sel.color}40`:'none',transition:'all .3s'}},
-        sel?`Entrar como ${sel.name} ${sel.emoji} →`:'Selecciona un perfil'),
+        e('div',{style:r({gap:8,marginBottom:10})},e('div',{style:{width:3,height:16,borderRadius:2,background:C.purple}}),e('span',{style:{fontSize:10,fontWeight:700,color:C.purple,textTransform:'uppercase',letterSpacing:1.5}},'Usuario de MKT')),
+        e('div',{style:co({gap:7})},mkts.map(UBtn))),
+      e('button',{onClick:()=>sel&&onLogin(sel),className:'btn-ani',style:{width:'100%',padding:'15px',borderRadius:16,border:'none',cursor:sel?'pointer':'not-allowed',fontWeight:800,fontSize:15,letterSpacing:.3,background:sel?`linear-gradient(135deg,${sel.color},${sel.color}bb)`:C.bg3,color:sel?'#fff':C.mute,boxShadow:sel?`0 16px 40px ${sel.color}40`:'none',transition:'all .3s'}},sel?`Entrar como ${sel.name} ${sel.emoji} →`:'Selecciona un perfil'),
       e('div',{style:{textAlign:'center',marginTop:20,fontSize:11,color:C.mute}},'GTAHUB Content Hub · Eleevate MX © 2026')));
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────
-function DashboardPage({proposals,setView,setSelected,user}){
-  const cnt={total:proposals.length,pending:proposals.filter(p=>p.status==='pending').length,approved:proposals.filter(p=>p.status==='approved').length,review:proposals.filter(p=>p.status==='review').length};
-  const mine=user.role==='mkt'?proposals.filter(p=>p.author===user.name):proposals;
+// ── DASHBOARD ─────────────────────────────────────────
+function Dashboard({props,setView,setSel,user}){
+  const cnt={total:props.length,pending:props.filter(p=>p.status==='pending').length,approved:props.filter(p=>p.status==='approved').length,review:props.filter(p=>p.status==='review').length};
+  const mine=user.role==='mkt'?props.filter(p=>p.author===user.name):props;
   return e('div',{className:'page',style:{padding:'28px 32px',maxWidth:1080}},
     e('div',{style:r({justifyContent:'space-between',marginBottom:28})},
-      e('div',null,
-        e('h1',{style:{fontSize:24,fontWeight:900,color:C.ink,margin:'0 0 5px',letterSpacing:-.8}},'Hola, ',user.emoji,' ',user.name.split(' ')[0],' 👋'),
-        e('div',{style:{fontSize:13,color:C.dim}},'Mayo 2026 · ',e('span',{style:{color:C.cyan,fontWeight:600}},'Parrilla activa'))),
-      user.role==='admin'&&cnt.pending>0&&e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:14,background:`${C.red}15`,border:`1px solid ${C.red}35`,cursor:'pointer',color:C.red,fontSize:12,fontWeight:700}},e(IC.AlertCircle,{size:14}),' ',cnt.pending,' pendiente',cnt.pending>1?'s':'',' de revisión')),
+      e('div',null,e('h1',{style:{fontSize:24,fontWeight:900,color:C.ink,margin:'0 0 5px',letterSpacing:-.8}},'Hola, ',user.emoji,' ',user.name.split(' ')[0],' 👋'),e('div',{style:{fontSize:13,color:C.dim}},'Mayo 2026 · ',e('span',{style:{color:C.cyan,fontWeight:600}},'Parrilla activa'))),
+      user.role==='admin'&&cnt.pending>0&&e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:14,background:`${C.red}15`,border:`1px solid ${C.red}35`,cursor:'pointer',color:C.red,fontSize:12,fontWeight:700,animation:'pulse 2s ease infinite'}},IC.Alert(14,C.red),' ',cnt.pending,' pendiente',cnt.pending>1?'s':'',' de revisión')),
     e('div',{style:r({gap:14,marginBottom:28,flexWrap:'wrap'})},
-      e(Stat,{label:'Total',       value:cnt.total,    Icon:IC.FileText,    color:C.blueB}),
-      e(Stat,{label:'Pendientes',  value:cnt.pending,  Icon:IC.Clock,       color:C.cyan}),
-      e(Stat,{label:'Aprobadas',   value:cnt.approved, Icon:IC.CheckCircle, color:C.green}),
-      e(Stat,{label:'En revisión', value:cnt.review,   Icon:IC.Eye,         color:C.gold})),
+      e(Stat,{label:'Total',       value:cnt.total,    color:C.blueB, IcoFn:(s)=>IC.FileText(s,C.blueB)}),
+      e(Stat,{label:'Pendientes',  value:cnt.pending,  color:C.cyan,  IcoFn:(s)=>IC.Clock(s,C.cyan)}),
+      e(Stat,{label:'Aprobadas',   value:cnt.approved, color:C.green, IcoFn:(s)=>IC.CheckCircle(s,C.green)}),
+      e(Stat,{label:'En revisión', value:cnt.review,   color:C.gold,  IcoFn:(s)=>IC.Eye(s,C.gold)})),
     e('div',null,
       e('div',{style:r({justifyContent:'space-between',marginBottom:14})},
         e('span',{style:{fontSize:14,fontWeight:800,color:C.ink}},user.role==='mkt'?'Mis Propuestas':'Actividad Reciente'),
-        e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:4,fontSize:12,color:C.cyan,background:'none',border:'none',cursor:'pointer',fontWeight:700}},'Ver todas ',e(IC.ChevronRight,{size:13}))),
-      e('div',{style:c({gap:9})},
+        e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:4,fontSize:12,color:C.cyan,background:'none',border:'none',cursor:'pointer',fontWeight:700}},'Ver todas ',IC.ChevronR(13,C.cyan))),
+      e('div',{style:co({gap:9})},
         mine.length===0&&e('div',{style:{textAlign:'center',padding:40,color:C.mute,fontSize:13}},'Sin propuestas aún.'),
-        mine.slice(0,5).map(p=>e(Card,{key:p.id,hover:true,style:{padding:'14px 18px'},onClick:()=>{setSelected(p);setView('proposal-detail');}},
+        mine.slice(0,5).map(p=>e(Card,{key:p.id,hover:true,sx:{padding:'14px 18px'},onClick:()=>{setSel(p);setView('detail');}},
           e('div',{style:r({gap:14})},
             e('div',{style:{position:'relative',flexShrink:0}},
               e('img',{src:p.img,style:{width:50,height:50,borderRadius:12,objectFit:'cover',display:'block'},alt:''}),
-              e('div',{style:{position:'absolute',bottom:-3,right:-3,width:19,height:19,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},
-                e((TYPE[p.type]||TYPE.post).Icon,{size:8,color:(TYPE[p.type]||TYPE.post).color}))),
+              e('div',{style:{position:'absolute',bottom:-3,right:-3,width:19,height:19,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},(TPS[p.type]||TPS.post).icon(8))),
             e('div',{style:{flex:1,minWidth:0}},
-              e('div',{style:r({gap:7,marginBottom:4,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{type:p.type})),
+              e('div',{style:r({gap:7,marginBottom:4,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{t:p.type})),
               e('div',{style:{fontSize:11,color:C.dim}},p.week,' · ',p.day,' · ',p.author)),
-            e('div',{style:r({flexShrink:0})},e(SBadge,{status:p.status}))))))),
-    user.role==='mkt'&&e('div',{style:r({gap:10,marginTop:20})},
-      e(Btn,{v:'primary',onClick:()=>setView('new-proposal')},e(IC.Plus,{size:14}),' Nueva propuesta'),
-      e(Btn,{onClick:()=>setView('parrilla')},e(IC.Calendar,{size:14}),' Ver parrilla')));
+            e(SBadge,{s:p.status}))))),
+    user.role==='mkt'&&e('div',{style:r({gap:10,marginTop:20})},e(Btn,{v:'pri',onClick:()=>setView('new-proposal')},IC.Plus(14),' Nueva propuesta'),e(Btn,{onClick:()=>setView('parrilla')},IC.Calendar(14),' Ver parrilla'))));
 }
 
-// ── PROPOSALS ─────────────────────────────────────────────
-function ProposalsPage({proposals,setProposals,setView,setSelected,user,showNotif}){
-  const [filter,setFilter]=useState('all');
-  const [weekF,setWeekF]=useState('all');
+// ── PROPOSALS ─────────────────────────────────────────
+function Proposals({props,setProps,setView,setSel,user,toast}){
+  const [flt,setFlt]=useState('all');
+  const [wk,setWk]=useState('all');
   const TABS=['all','pending','approved','review','rejected'];
-  const TLBL={all:'Todas',pending:'Pendientes',approved:'Aprobadas',review:'En Revisión',rejected:'Rechazadas'};
-  const filtered=proposals.filter(p=>(filter==='all'||p.status===filter)&&(weekF==='all'||p.week===weekF)&&(user.role==='admin'||p.author===user.name));
-  const act=async(id,status)=>{
-    await api.update(id,status);
-    setProposals(ps=>ps.map(p=>p.id===id?{...p,status}:p));
-    showNotif(`Propuesta ${({approved:'aprobada ✓',rejected:'rechazada ✗',review:'a revisión'})[status]}`,status==='approved'?'success':status==='rejected'?'error':'info');
-  };
+  const LBL={all:'Todas',pending:'Pendientes',approved:'Aprobadas',review:'En Revisión',rejected:'Rechazadas'};
+  const filtered=props.filter(p=>(flt==='all'||p.status===flt)&&(wk==='all'||p.week===wk)&&(user.role==='admin'||p.author===user.name));
+  const act=async(id,s)=>{await api.update(id,s);setProps(ps=>ps.map(p=>p.id===id?{...p,status:s}:p));toast(`Propuesta ${({approved:'aprobada ✓',rejected:'rechazada ✗',review:'a revisión'})[s]}`,s==='approved'?'success':s==='rejected'?'error':'info');};
   return e('div',{className:'page',style:{padding:'28px 32px',maxWidth:1000}},
     e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
       e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Propuestas'),e('div',{style:{fontSize:13,color:C.dim}},filtered.length,' resultado',filtered.length!==1?'s':'')),
-      user.role==='mkt'&&e(Btn,{v:'primary',sm:true,onClick:()=>setView('new-proposal')},e(IC.Plus,{size:13}),' Nueva')),
+      user.role==='mkt'&&e(Btn,{v:'pri',sm:true,onClick:()=>setView('new-proposal')},IC.Plus(13),' Nueva')),
     e('div',{style:r({gap:10,marginBottom:18,flexWrap:'wrap'})},
       e('div',{style:{background:C.bg2,borderRadius:14,padding:5,border:`1px solid ${C.line}`,display:'flex',gap:3}},
-        TABS.map(t=>e('button',{key:t,onClick:()=>setFilter(t),style:{padding:'6px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:filter===t?C.bg4:'transparent',border:filter===t?`1px solid ${C.lineM}`:'1px solid transparent',color:filter===t?C.ink:C.dim,whiteSpace:'nowrap'}},TLBL[t]))),
-      e('select',{value:weekF,onChange:ev=>setWeekF(ev.target.value),style:{padding:'9px 14px',borderRadius:12,fontSize:11,fontWeight:700,background:C.bg2,border:`1px solid ${C.lineM}`,color:C.dim,cursor:'pointer'}},
+        TABS.map(t=>e('button',{key:t,onClick:()=>setFlt(t),style:{padding:'6px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:flt===t?C.bg4:'transparent',border:flt===t?`1px solid ${C.lineM}`:'1px solid transparent',color:flt===t?C.ink:C.dim,whiteSpace:'nowrap'}},LBL[t]))),
+      e('select',{value:wk,onChange:ev=>setWk(ev.target.value),style:{padding:'9px 14px',borderRadius:12,fontSize:11,fontWeight:700,background:C.bg2,border:`1px solid ${C.lineM}`,color:C.dim,cursor:'pointer'}},
         e('option',{value:'all'},'Todas las semanas'),WEEKS.map(w=>e('option',{key:w,value:w},w)))),
-    e('div',{style:c({gap:10})},
+    e('div',{style:co({gap:10})},
       filtered.length===0&&e('div',{style:{textAlign:'center',padding:50,color:C.mute,fontSize:14}},'Sin propuestas con este filtro'),
       filtered.map(p=>{
-        const TC=TYPE[p.type];
-        return e(Card,{key:p.id,style:{padding:'15px 18px'}},
+        const tp=TPS[p.type];
+        return e(Card,{key:p.id,sx:{padding:'15px 18px'}},
           e('div',{style:r({gap:14})},
             e('div',{style:{position:'relative',flexShrink:0}},
               e('img',{src:p.img,style:{width:62,height:62,borderRadius:14,objectFit:'cover',display:'block'},alt:''}),
-              TC&&e('div',{style:{position:'absolute',bottom:-4,right:-4,width:22,height:22,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},e(TC.Icon,{size:10,color:TC.color}))),
+              tp&&e('div',{style:{position:'absolute',bottom:-4,right:-4,width:22,height:22,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},tp.icon(10))),
             e('div',{style:{flex:1,minWidth:0}},
-              e('div',{style:r({gap:8,marginBottom:5,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{type:p.type})),
+              e('div',{style:r({gap:8,marginBottom:5,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{t:p.type})),
               e('div',{style:{fontSize:11,color:C.dim}},p.week,' · ',p.day,' ',p.time,' · ',p.author)),
-            e('div',{style:c({gap:8,alignItems:'flex-end',flexShrink:0})},
-              e(SBadge,{status:p.status}),
+            e('div',{style:co({gap:8,alignItems:'flex-end',flexShrink:0})},
+              e(SBadge,{s:p.status}),
               e('div',{style:r({gap:6})},
                 user.role==='admin'&&p.status==='pending'&&e(React.Fragment,null,
-                  e('button',{title:'Aprobar',onClick:()=>act(p.id,'approved'),style:{background:`${C.green}15`,border:`1px solid ${C.green}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.green,display:'flex'}},e(IC.CheckCircle,{size:13})),
-                  e('button',{title:'Revisar',onClick:()=>act(p.id,'review'),style:{background:`${C.gold}15`,border:`1px solid ${C.gold}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.gold,display:'flex'}},e(IC.Eye,{size:13})),
-                  e('button',{title:'Rechazar',onClick:()=>act(p.id,'rejected'),style:{background:`${C.red}15`,border:`1px solid ${C.red}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.red,display:'flex'}},e(IC.XCircle,{size:13}))),
-                e('button',{onClick:()=>{setSelected(p);setView('proposal-detail');},style:{background:`${C.blue}15`,border:`1px solid ${C.blue}35`,borderRadius:9,padding:'6px 12px',cursor:'pointer',color:C.blueB,fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:5}},e(IC.Eye,{size:12}),' Ver')))));
+                  e('button',{title:'Aprobar',onClick:()=>act(p.id,'approved'),style:{background:`${C.green}15`,border:`1px solid ${C.green}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.green,display:'flex'}},IC.CheckCircle(13,C.green)),
+                  e('button',{title:'Revisar',onClick:()=>act(p.id,'review'),style:{background:`${C.gold}15`,border:`1px solid ${C.gold}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.gold,display:'flex'}},IC.Eye(13,C.gold)),
+                  e('button',{title:'Rechazar',onClick:()=>act(p.id,'rejected'),style:{background:`${C.red}15`,border:`1px solid ${C.red}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.red,display:'flex'}},IC.XCircle(13,C.red))),
+                e('button',{onClick:()=>{setSel(p);setView('detail');},style:{background:`${C.blue}15`,border:`1px solid ${C.blue}35`,borderRadius:9,padding:'6px 12px',cursor:'pointer',color:C.blueB,fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:5}},IC.Eye(12,C.blueB),' Ver')))));
       })));
 }
 
-// ── PROPOSAL DETAIL ───────────────────────────────────────
-function ProposalDetailPage({proposal:initP,proposals,setProposals,setView,user,showNotif}){
+// ── DETAIL ────────────────────────────────────────────
+function Detail({initP,props,setProps,setView,user,toast}){
   const [note,setNote]=useState(initP.notes||'');
   const [confirmR,setConfirmR]=useState(false);
-  const p=proposals.find(x=>x.id===initP.id)||initP;
-  const doAction=async(status)=>{
-    await api.update(p.id,status,note);
-    setProposals(ps=>ps.map(x=>x.id===p.id?{...x,status,notes:note}:x));
-    showNotif({approved:'✅ Aprobada',review:'👁 A revisión',rejected:'❌ Rechazada'}[status],status==='approved'?'success':status==='rejected'?'error':'info');
-    setConfirmR(false);
-  };
-  const inp={width:'100%',background:C.bg3,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:12,outline:'none'};
+  const p=props.find(x=>x.id===initP.id)||initP;
+  const doAct=async(s)=>{await api.update(p.id,s,note);setProps(ps=>ps.map(x=>x.id===p.id?{...x,status:s,notes:note}:x));toast({approved:'✅ Aprobada',review:'👁 A revisión',rejected:'❌ Rechazada'}[s],s==='approved'?'success':s==='rejected'?'error':'info');setConfirmR(false);};
+  const inp={width:'100%',background:C.bg3,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:12};
   return e('div',{className:'page',style:{padding:'22px 28px',maxWidth:1100}},
-    e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',color:C.dim,fontSize:12,fontWeight:600,marginBottom:20,padding:0}},e(IC.ArrowLeft,{size:14}),' Volver'),
+    e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',color:C.dim,fontSize:12,fontWeight:600,marginBottom:20,padding:0}},IC.ArrowLeft(14,C.dim),' Volver'),
     e('div',{style:r({gap:28,alignItems:'flex-start'})},
-      e('div',{style:{flexShrink:0}},e(IGPreview,{proposal:p})),
+      e('div',{style:{flexShrink:0}},e(IGPreview,{p})),
       e('div',{style:{flex:1,minWidth:0}},
-        e('div',{style:r({gap:10,marginBottom:20,flexWrap:'wrap'})},
-          e('h2',{style:{fontSize:20,fontWeight:900,color:C.ink,flex:1,margin:0}},p.title),
-          e(SBadge,{status:p.status}),e(TBadge,{type:p.type})),
+        e('div',{style:r({gap:10,marginBottom:20,flexWrap:'wrap'})},e('h2',{style:{fontSize:20,fontWeight:900,color:C.ink,flex:1,margin:0}},p.title),e(SBadge,{s:p.status}),e(TBadge,{t:p.type})),
         e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}},
-          [['Autor',p.author],['Plataforma',p.platform],['Semana',p.week],['Publicación',`${p.day} · ${p.time}`],['Target',p.target],['Alcance est.',p.reach||'—'],...(p.budget?[['Presupuesto',`$${p.budget} MXN`]]:[])].map(([k,v])=>
+          [['Autor',p.author],['Plataforma',p.platform],['Semana',p.week],['Publicación',`${p.day} · ${p.time}`],['Target',p.target||'—'],['Alcance est.',p.reach||'—'],...(p.budget?[['Presupuesto',`$${p.budget} MXN`]]:[])].map(([k,v])=>
             e('div',{key:k,style:{background:C.bg3,borderRadius:12,padding:'11px 14px',border:`1px solid ${C.line}`}},
               e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.8,marginBottom:4}},k),
               e('div',{style:{fontSize:13,fontWeight:700,color:C.ink}},v)))),
-        e(Card,{style:{padding:'14px 16px',marginBottom:12}},
-          e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},'Caption'),
-          e('pre',{style:{fontSize:12,color:C.ink,fontFamily:'Poppins,sans-serif',whiteSpace:'pre-wrap',lineHeight:1.8,margin:0}},p.caption)),
+        e(Card,{sx:{padding:'14px 16px',marginBottom:12}},e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},'Caption'),e('pre',{style:{fontSize:12,color:C.ink,fontFamily:'Poppins,sans-serif',whiteSpace:'pre-wrap',lineHeight:1.8,margin:0}},p.caption)),
         p.hashtags?.length>0&&e('div',{style:r({gap:6,flexWrap:'wrap',marginBottom:14})},p.hashtags.map(h=>e(Pill,{key:h,label:h,color:C.blueB}))),
-        e(Card,{style:{padding:'14px 16px',marginBottom:18}},
-          e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},user.role==='admin'?'Notas del equipo':'Feedback'),
-          user.role==='admin'?e('textarea',{value:note,onChange:ev=>setNote(ev.target.value),placeholder:'Escribe feedback…',rows:3,style:{...inp,resize:'vertical'}}):e('div',{style:{fontSize:12,color:p.notes?C.dim:C.mute,lineHeight:1.7}},p.notes||'Sin notas aún.')),
-        user.role==='admin'&&e('div',null,
-          e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:12}},'Acciones de revisión'),
-          e('div',{style:r({gap:10,flexWrap:'wrap'})},
-            e(Btn,{v:'success',onClick:()=>doAction('approved')},e(IC.CheckCircle,{size:14}),' Aprobar'),
-            e(Btn,{v:'warning',onClick:()=>doAction('review')},e(IC.Eye,{size:14}),' A revisión'),
-            !confirmR?e(Btn,{v:'danger',onClick:()=>setConfirmR(true)},e(IC.XCircle,{size:14}),' Rechazar'):e('div',{style:r({gap:8})},
-              e(Btn,{v:'danger',onClick:()=>doAction('rejected')},e(IC.XCircle,{size:14}),' Confirmar'),
-              e(Btn,{onClick:()=>setConfirmR(false)},'Cancelar')))))));
+        e(Card,{sx:{padding:'14px 16px',marginBottom:18}},e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},user.role==='admin'?'Notas del equipo':'Feedback'),user.role==='admin'?e('textarea',{value:note,onChange:ev=>setNote(ev.target.value),placeholder:'Escribe feedback…',rows:3,style:{...inp,resize:'vertical'}}):e('div',{style:{fontSize:12,color:p.notes?C.dim:C.mute,lineHeight:1.7}},p.notes||'Sin notas aún.')),
+        user.role==='admin'&&e('div',null,e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:12}},'Acciones de revisión'),e('div',{style:r({gap:10,flexWrap:'wrap'})},
+          e(Btn,{v:'suc',onClick:()=>doAct('approved')},IC.CheckCircle(14),' Aprobar'),
+          e(Btn,{v:'war',onClick:()=>doAct('review')},IC.Eye(14),' A revisión'),
+          !confirmR?e(Btn,{v:'dan',onClick:()=>setConfirmR(true)},IC.XCircle(14),' Rechazar'):e('div',{style:r({gap:8})},e(Btn,{v:'dan',onClick:()=>doAct('rejected')},IC.XCircle(14),' Confirmar'),e(Btn,{onClick:()=>setConfirmR(false)},'Cancelar')))))));
 }
 
-// ── NEW PROPOSAL ──────────────────────────────────────────
-function NewProposalPage({proposals,setProposals,setView,user,showNotif}){
-  const [form,setForm]=useState({title:'',type:'reel',week:'Semana 1',day:'Lunes',time:'12:00',img:'',caption:'',hashtags:'',cta:'',target:'',budget:''});
-  const [preview,setPreview]=useState(false);
-  const [saving,setSaving]=useState(false);
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const inp={width:'100%',background:C.bg2,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:13,outline:'none'};
+// ── NEW PROPOSAL ──────────────────────────────────────
+function NewProposal({setProps,setView,user,toast}){
+  const [f,setF]=useState({title:'',type:'reel',week:'Semana 1',day:'Lunes',time:'12:00',img:'',caption:'',hashtags:'',cta:'',target:'',budget:''});
+  const [prev,setPrev]=useState(false);
+  const [sav,setSav]=useState(false);
+  const set=(k,v)=>setF(x=>({...x,[k]:v}));
+  const inp={width:'100%',background:C.bg2,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:13};
   const lbl={fontSize:10,color:C.dim,fontWeight:700,textTransform:'uppercase',letterSpacing:.8,marginBottom:6,display:'block'};
-  const prevP={...form,hashtags:form.hashtags.split(/[\s,]+/).filter(Boolean),img:form.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop'};
+  const prevP={...f,hashtags:f.hashtags.split(/[\s,]+/).filter(Boolean),img:f.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop'};
   const submit=async()=>{
-    if(!form.title||!form.caption){showNotif('Completa título y caption','error');return;}
-    setSaving(true);
-    const np={title:form.title,type:form.type,author:user.name,av:user.av,acColor:user.color,week:form.week,day:form.day,time:form.time,caption:form.caption,img:form.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',hashtags:form.hashtags.split(/[\s,]+/).filter(Boolean),cta:form.cta,target:form.target,platform:'Instagram',date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}),notes:'',reach:'—',budget:form.budget?parseInt(form.budget):null};
+    if(!f.title||!f.caption){toast('Completa título y caption','error');return;}
+    setSav(true);
+    const np={title:f.title,type:f.type,author:user.name,av:user.av,week:f.week,day:f.day,time:f.time,caption:f.caption,img:f.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',hashtags:f.hashtags.split(/[\s,]+/).filter(Boolean),cta:f.cta,target:f.target,platform:'Instagram',date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}),notes:'',reach:'—',budget:f.budget?parseInt(f.budget):null};
     const r=await api.add(np);
-    setProposals(ps=>[...ps,{...np,id:r.id||Date.now(),status:'pending'}]);
-    showNotif('✅ Propuesta enviada para revisión','success');
-    setSaving(false);setView('proposals');
+    setProps(ps=>[...ps,{...np,id:r.id||Date.now(),status:'pending'}]);
+    toast('✅ Propuesta enviada para revisión','success');setSav(false);setView('proposals');
   };
   return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:980}},
     e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
       e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Nueva Propuesta'),e('div',{style:{fontSize:13,color:C.dim}},'Crea una propuesta para la parrilla semanal')),
-      e(Btn,{sm:true,onClick:()=>setPreview(!preview)},preview?e(React.Fragment,null,e(IC.X,{size:13}),' Ocultar'):e(React.Fragment,null,e(IC.Eye,{size:13}),' Vista previa'))),
+      e(Btn,{sm:true,onClick:()=>setPrev(!prev)},prev?e(React.Fragment,null,IC.X(13),' Ocultar'):e(React.Fragment,null,IC.Eye(13),' Vista previa'))),
     e('div',{style:r({gap:28,alignItems:'flex-start'})},
       e('div',{style:{flex:1,minWidth:0}},
-        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Título'),e('input',{value:form.title,onChange:ev=>set('title',ev.target.value),placeholder:'Ej: Reel: Top 5 misiones épicas',style:inp})),
+        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Título'),e('input',{value:f.title,onChange:ev=>set('title',ev.target.value),placeholder:'Ej: Reel: Top 5 misiones épicas',style:inp})),
         e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:14}},
-          [{k:'type',label:'Tipo',opts:Object.keys(TYPE),fn:k=>TYPE[k].label},{k:'week',label:'Semana',opts:WEEKS},{k:'day',label:'Día',opts:DAYS}]
-            .map(f=>e('div',{key:f.k},e('label',{style:lbl},f.label),e('select',{value:form[f.k],onChange:ev=>set(f.k,ev.target.value),style:{...inp,cursor:'pointer'}},f.opts.map(o=>e('option',{key:o,value:o},f.fn?f.fn(o):o))))),
-          e('div',{key:'time'},e('label',{style:lbl},'Hora'),e('input',{type:'time',value:form.time,onChange:ev=>set('time',ev.target.value),style:inp}))),
-        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'URL de imagen'),e('input',{value:form.img,onChange:ev=>set('img',ev.target.value),placeholder:'https://… (opcional)',style:inp})),
-        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Caption'),e('textarea',{value:form.caption,onChange:ev=>set('caption',ev.target.value),rows:4,placeholder:'Escribe el copy del post…',style:{...inp,resize:'vertical'}})),
+          [{k:'type',label:'Tipo',opts:Object.keys(TPS),fn:k=>TPS[k].label},{k:'week',label:'Semana',opts:WEEKS},{k:'day',label:'Día',opts:DAYS}].map(x=>e('div',{key:x.k},e('label',{style:lbl},x.label),e('select',{value:f[x.k],onChange:ev=>set(x.k,ev.target.value),style:{...inp,cursor:'pointer'}},x.opts.map(o=>e('option',{key:o,value:o},x.fn?x.fn(o):o))))),
+          e('div',{key:'t'},e('label',{style:lbl},'Hora'),e('input',{type:'time',value:f.time,onChange:ev=>set('time',ev.target.value),style:inp}))),
+        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'URL de imagen'),e('input',{value:f.img,onChange:ev=>set('img',ev.target.value),placeholder:'https://… (opcional)',style:inp})),
+        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Caption'),e('textarea',{value:f.caption,onChange:ev=>set('caption',ev.target.value),rows:4,placeholder:'Escribe el copy del post…',style:{...inp,resize:'vertical'}})),
         e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}},
-          e('div',null,e('label',{style:lbl},'Hashtags'),e('input',{value:form.hashtags,onChange:ev=>set('hashtags',ev.target.value),placeholder:'#GTAHUB, #GTA5',style:inp})),
-          e('div',null,e('label',{style:lbl},'Call to Action'),e('input',{value:form.cta,onChange:ev=>set('cta',ev.target.value),placeholder:'Link en bio',style:inp}))),
+          e('div',null,e('label',{style:lbl},'Hashtags'),e('input',{value:f.hashtags,onChange:ev=>set('hashtags',ev.target.value),placeholder:'#GTAHUB, #GTA5',style:inp})),
+          e('div',null,e('label',{style:lbl},'Call to Action'),e('input',{value:f.cta,onChange:ev=>set('cta',ev.target.value),placeholder:'Link en bio',style:inp}))),
         e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:22}},
-          e('div',null,e('label',{style:lbl},'Target'),e('input',{value:form.target,onChange:ev=>set('target',ev.target.value),placeholder:'Gamers 18–28, México',style:inp})),
-          e('div',null,e('label',{style:lbl},'Presupuesto MXN'),e('input',{type:'number',value:form.budget,onChange:ev=>set('budget',ev.target.value),placeholder:'0',style:inp}))),
-        e('div',{style:r({gap:10})},
-          e(Btn,{v:'primary',onClick:submit,style:{opacity:saving?.7:1}},saving?'Guardando…':e(React.Fragment,null,e(IC.Zap,{size:14}),' Enviar propuesta')),
-          e(Btn,{onClick:()=>setView('proposals')},'Cancelar'))),
-      preview&&e('div',{style:{flexShrink:0}},e(IGPreview,{proposal:prevP}))));
+          e('div',null,e('label',{style:lbl},'Target'),e('input',{value:f.target,onChange:ev=>set('target',ev.target.value),placeholder:'Gamers 18–28, México',style:inp})),
+          e('div',null,e('label',{style:lbl},'Presupuesto MXN'),e('input',{type:'number',value:f.budget,onChange:ev=>set('budget',ev.target.value),placeholder:'0',style:inp}))),
+        e('div',{style:r({gap:10})},e(Btn,{v:'pri',onClick:submit,dis:sav},sav?'Guardando…':e(React.Fragment,null,IC.Zap(14),' Enviar propuesta')),e(Btn,{onClick:()=>setView('proposals')},'Cancelar'))),
+      prev&&e('div',{style:{flexShrink:0}},e(IGPreview,{p:prevP}))));
 }
 
-// ── PARRILLA ──────────────────────────────────────────────
-function ParrillaPage({proposals,setView,setSelected}){
-  const [weekF,setWeekF]=useState('Semana 1');
-  const wps=proposals.filter(p=>p.week===weekF);
+// ── PARRILLA ──────────────────────────────────────────
+function Parrilla({props,setView,setSel}){
+  const [wk,setWk]=useState('Semana 1');
+  const wps=props.filter(p=>p.week===wk);
   return e('div',{className:'page',style:{padding:'24px 28px'}},
     e('div',{style:r({justifyContent:'space-between',marginBottom:22})},
-      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Parrilla Semanal'),e('div',{style:{fontSize:13,color:C.dim}},'Calendario · ',weekF)),
-      e('div',{style:r({gap:6})},WEEKS.map(w=>e('button',{key:w,onClick:()=>setWeekF(w),style:{padding:'8px 13px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:weekF===w?`${C.blue}22`:C.bg2,border:weekF===w?`1px solid ${C.blue}45`:`1px solid ${C.line}`,color:weekF===w?C.blueB:C.dim}},w)))),
+      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Parrilla Semanal'),e('div',{style:{fontSize:13,color:C.dim}},'Calendario · ',wk)),
+      e('div',{style:r({gap:6})},WEEKS.map(w=>e('button',{key:w,onClick:()=>setWk(w),style:{padding:'8px 13px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:wk===w?`${C.blue}22`:C.bg2,border:wk===w?`1px solid ${C.blue}45`:`1px solid ${C.line}`,color:wk===w?C.blueB:C.dim}},w)))),
     e('div',{style:{display:'grid',gridTemplateColumns:'56px repeat(7,1fr)',gap:8}},
       e('div'),
       DAYS.map(d=>e('div',{key:d,style:{padding:'8px 4px',textAlign:'center',fontSize:10,fontWeight:700,color:C.dim,textTransform:'uppercase',letterSpacing:.8}},d.substring(0,3))),
-      e('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:12}},e('span',{style:{fontSize:10,color:C.blueB,fontWeight:700,textTransform:'uppercase'}},weekF.replace('Semana','S'))),
+      e('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:12}},e('span',{style:{fontSize:10,color:C.blueB,fontWeight:700,textTransform:'uppercase'}},wk.replace('Semana','S'))),
       DAYS.map(day=>{
         const dayPs=wps.filter(p=>p.day===day);
         return e('div',{key:day,style:{minHeight:130,background:C.bg2,border:`1px solid ${C.line}`,borderRadius:14,padding:7,display:'flex',flexDirection:'column',gap:6}},
           dayPs.length===0&&e('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:C.mute,fontSize:12}},'—'),
           dayPs.map(p=>{
-            const sc=STATUS[p.status],TC=TYPE[p.type];
-            return e('button',{key:p.id,onClick:()=>{setSelected(p);setView('proposal-detail');},style:{display:'flex',flexDirection:'column',gap:2,padding:'7px 9px',background:`${sc.color}15`,border:`1px solid ${sc.color}30`,borderRadius:10,cursor:'pointer',textAlign:'left',width:'100%'}},
+            const sc=STS[p.status],tp=TPS[p.type];
+            return e('button',{key:p.id,onClick:()=>{setSel(p);setView('detail');},style:{display:'flex',flexDirection:'column',gap:2,padding:'7px 9px',background:`${sc.color}15`,border:`1px solid ${sc.color}30`,borderRadius:10,cursor:'pointer',textAlign:'left',width:'100%'}},
               e('div',{style:{fontSize:9,fontWeight:800,color:sc.color,textTransform:'uppercase',letterSpacing:.5}},p.time),
               e('div',{style:{fontSize:10,fontWeight:700,color:C.ink,lineHeight:1.4,overflow:'hidden'}},p.title.replace(/^[^:]+: /,'')),
-              e('div',{style:r({gap:4})},TC&&e(TC.Icon,{size:8,color:TC.color}),e('span',{style:{fontSize:8,color:C.dim}},p.author)));
+              e('div',{style:r({gap:4})},tp&&tp.icon(8),e('span',{style:{fontSize:8,color:C.dim}},p.author)));
           }));
       }),
       [2,3,4].flatMap(n=>[
@@ -608,110 +490,108 @@ function ParrillaPage({proposals,setView,setSelected}){
         ...DAYS.map(d=>e('div',{key:`${n}${d}`,style:{minHeight:60,background:`${C.bg2}55`,border:`1px dashed ${C.line}`,borderRadius:14}}))
       ])),
     e('div',{style:r({gap:16,marginTop:18,flexWrap:'wrap'})},
-      Object.entries(STATUS).map(([k,v])=>e('div',{key:k,style:r({gap:6})},
-        e('div',{style:{width:10,height:10,borderRadius:3,background:v.color,boxShadow:`0 0 6px ${v.color}66`}}),
-        e('span',{style:{fontSize:11,color:C.dim}},v.label)))));
+      Object.entries(STS).map(([k,v])=>e('div',{key:k,style:r({gap:6})},e('div',{style:{width:10,height:10,borderRadius:3,background:v.color,boxShadow:`0 0 6px ${v.color}66`}}),e('span',{style:{fontSize:11,color:C.dim}},v.label)))));
 }
 
-// ── TARGETS ───────────────────────────────────────────────
-function TargetsPage(){
+// ── TARGETS ───────────────────────────────────────────
+function Targets(){
   return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:920}},
     e('div',{style:{marginBottom:24}},e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Targets & Audiencia'),e('div',{style:{fontSize:13,color:C.dim}},'Segmentos definidos para campañas GTAHUB')),
     e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
-      TARGETS.map(t=>e(Card,{key:t.id,style:{padding:'20px',position:'relative',overflow:'hidden'}},
+      TARGETS.map(t=>e(Card,{key:t.id,sx:{padding:'20px',position:'relative',overflow:'hidden'}},
         e('div',{style:{position:'absolute',top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${t.color},${t.color}44)`,borderRadius:'20px 20px 0 0'}}),
         e('div',{style:r({justifyContent:'space-between',marginBottom:16})},
           e('div',null,e('div',{style:{fontSize:16,fontWeight:800,color:C.ink}},t.name),e('div',{style:{fontSize:11,color:C.dim,marginTop:2}},t.platform)),
           e('div',{style:{textAlign:'right'}},e('div',{style:{fontSize:26,fontWeight:900,color:t.color,letterSpacing:-1}},t.size),e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'usuarios est.'))),
         e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}},
-          [['Edad',t.age],['Género',t.gender],['Ubicación',t.location]].map(([k,v])=>
-            e('div',{key:k,style:{background:C.bg3,borderRadius:10,padding:'8px 12px'}},
-              e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.7,marginBottom:3}},k),
-              e('div',{style:{fontSize:12,fontWeight:700,color:C.ink}},v)))),
+          [['Edad',t.age],['Género',t.gender],['Ubicación',t.location]].map(([k,v])=>e('div',{key:k,style:{background:C.bg3,borderRadius:10,padding:'8px 12px'}},e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.7,marginBottom:3}},k),e('div',{style:{fontSize:12,fontWeight:700,color:C.ink}},v)))),
         e('div',{style:r({gap:5,flexWrap:'wrap'})},t.interests.map(i=>e(Pill,{key:i,label:i,color:t.color})))))));
 }
 
-// ── ADS ───────────────────────────────────────────────────
-function AdsPage(){
-  const total=CAMPAIGNS.reduce((s,c)=>s+c.budget,0);
-  const spent=CAMPAIGNS.reduce((s,c)=>s+c.spent,0);
+// ── ADS ───────────────────────────────────────────────
+function Ads(){
+  const total=CAMPS.reduce((s,c)=>s+c.budget,0);
+  const spent=CAMPS.reduce((s,c)=>s+c.spent,0);
   return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:920}},
     e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
-      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Ads & Campañas'),e('div',{style:{fontSize:13,color:C.dim}},'Presupuesto publicitario · Mayo 2026')),
-      e(Btn,{v:'primary',sm:true},e(IC.Plus,{size:13}),' Nueva campaña')),
+      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Ads & Campañas'),e('div',{style:{fontSize:13,color:C.dim}},'Presupuesto · Mayo 2026')),
+      e(Btn,{v:'pri',sm:true},IC.Plus(13),' Nueva campaña')),
     e('div',{style:r({gap:14,marginBottom:26,flexWrap:'wrap'})},
-      e(Stat,{label:'Presupuesto total',value:`$${total.toLocaleString()}`,Icon:IC.BarChart2,  color:C.gold}),
-      e(Stat,{label:'Invertido',        value:`$${spent.toLocaleString()}`,Icon:IC.TrendingUp, color:C.red}),
-      e(Stat,{label:'Disponible',       value:`$${(total-spent).toLocaleString()}`,Icon:IC.DollarSign,color:C.green}),
-      e(Stat,{label:'Activas',          value:CAMPAIGNS.filter(c=>c.status==='active').length,Icon:IC.Activity,color:C.cyan})),
-    e('div',{style:c({gap:12})},
-      CAMPAIGNS.map(camp=>{
+      e(Stat,{label:'Presupuesto total',value:`$${total.toLocaleString()}`,color:C.gold,  IcoFn:(s)=>IC.BarChart(s,C.gold)}),
+      e(Stat,{label:'Invertido',        value:`$${spent.toLocaleString()}`,color:C.red,   IcoFn:(s)=>IC.TrendUp(s,C.red)}),
+      e(Stat,{label:'Disponible',       value:`$${(total-spent).toLocaleString()}`,color:C.green,IcoFn:(s)=>IC.Dollar(s,C.green)}),
+      e(Stat,{label:'Activas',          value:CAMPS.filter(c=>c.status==='active').length,color:C.cyan, IcoFn:(s)=>IC.Activity(s,C.cyan)})),
+    e('div',{style:co({gap:12})},
+      CAMPS.map(camp=>{
         const pct=Math.round((camp.spent/camp.budget)*100);
         const sc={active:C.green,completed:C.dim,scheduled:C.cyan}[camp.status];
         const sl={active:'Activa',completed:'Completada',scheduled:'Programada'}[camp.status];
-        return e(Card,{key:camp.id,style:{padding:'20px 22px'}},
+        return e(Card,{key:camp.id,sx:{padding:'20px 22px'}},
           e('div',{style:r({gap:16})},
             e('div',{style:{width:4,borderRadius:2,background:`linear-gradient(180deg,${camp.color},${camp.color}44)`,alignSelf:'stretch',flexShrink:0}}),
             e('div',{style:{flex:1,minWidth:0}},
               e('div',{style:r({justifyContent:'space-between',marginBottom:12})},
                 e('div',null,
                   e('div',{style:{fontSize:15,fontWeight:800,color:C.ink,marginBottom:4}},camp.name),
-                  e('div',{style:r({gap:8,flexWrap:'wrap'})},
-                    e('span',{style:{fontSize:11,color:C.dim}},camp.platform),
-                    e('span',{style:{fontSize:11,color:C.dim}},'·'),
-                    e('span',{style:{fontSize:11,color:C.dim}},camp.startDate,' – ',camp.endDate),
-                    e('span',{style:{fontSize:11,color:C.eGrn}},'📊 ',camp.reach))),
+                  e('div',{style:r({gap:10,flexWrap:'wrap'})},e('span',{style:{fontSize:11,color:C.dim}},camp.platform,' · ',camp.startDate,' – ',camp.endDate),e('span',{style:{fontSize:11,color:C.eGrn}},'📊 ',camp.reach))),
                 e('div',{style:r({gap:12,alignItems:'center',flexShrink:0})},
                   e('span',{style:{fontSize:11,fontWeight:700,color:sc,background:`${sc}18`,padding:'4px 10px',borderRadius:999,border:`1px solid ${sc}30`}},sl),
-                  e('div',{style:{textAlign:'right'}},
-                    e('div',{style:{fontSize:18,fontWeight:900,color:camp.color,letterSpacing:-.5}},'$',camp.budget.toLocaleString()),
-                    e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'presupuesto')))),
+                  e('div',{style:{textAlign:'right'}},e('div',{style:{fontSize:18,fontWeight:900,color:camp.color,letterSpacing:-.5}},'$',camp.budget.toLocaleString()),e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'presupuesto')))),
               e('div',{style:{background:C.bg3,borderRadius:6,height:7,overflow:'hidden',marginBottom:6}},
                 e('div',{style:{height:'100%',width:`${pct}%`,background:`linear-gradient(90deg,${camp.color},${camp.color}77)`,borderRadius:6}})),
-              e('div',{style:r({justifyContent:'space-between'})},
-                e('span',{style:{fontSize:10,color:C.dim}},'Gastado: $',camp.spent.toLocaleString()),
-                e('span',{style:{fontSize:10,color:camp.color,fontWeight:800}},pct,'%')))));
+              e('div',{style:r({justifyContent:'space-between'})},e('span',{style:{fontSize:10,color:C.dim}},'Gastado: $',camp.spent.toLocaleString()),e('span',{style:{fontSize:10,color:camp.color,fontWeight:800}},pct,'%')))));
       })));
 }
 
-// ── ROOT APP ──────────────────────────────────────────────
+// ── ROOT ──────────────────────────────────────────────
 function App(){
   const [user,setUser]=useState(null);
   const [view,setView]=useState('dashboard');
-  const [proposals,setProposals]=useState([]);
+  const [props,setProps]=useState([]);
   const [loading,setLoading]=useState(false);
-  const [selected,setSelected]=useState(null);
-  const [notif,setNotif]=useState(null);
+  const [sel,setSel]=useState(null);
+  const [toast,setToast]=useState(null);
+
   useEffect(()=>{
     if(!user) return;
     setLoading(true);
-    api.get().then(d=>setProposals(d)).catch(()=>setProposals(MOCK)).finally(()=>setLoading(false));
+    api.get().then(d=>setProps(d)).catch(()=>setProps(MOCK)).finally(()=>setLoading(false));
   },[user]);
-  const showNotif=(msg,type='success')=>{setNotif({msg,type});setTimeout(()=>setNotif(null),3200);};
-  if(!user) return e(LoginPage,{onLogin:u=>{setUser(u);setView('dashboard');}});
+
+  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200);};
+
+  if(!user) return e(Login,{onLogin:u=>{setUser(u);setView('dashboard');}});
+
   const pages={
-    'dashboard':       ()=>e(DashboardPage,      {proposals,setView,setSelected,user}),
-    'proposals':       ()=>e(ProposalsPage,       {proposals,setProposals,setView,setSelected,user,showNotif}),
-    'proposal-detail': ()=>selected?e(ProposalDetailPage,{proposal:selected,proposals,setProposals,setView,user,showNotif}):null,
-    'new-proposal':    ()=>e(NewProposalPage,     {proposals,setProposals,setView,user,showNotif}),
-    'parrilla':        ()=>e(ParrillaPage,        {proposals,setView,setSelected}),
-    'targets':         ()=>e(TargetsPage),
-    'ads':             ()=>e(AdsPage),
+    dashboard:    ()=>e(Dashboard,    {props,setView,setSel,user}),
+    proposals:    ()=>e(Proposals,    {props,setProps,setView,setSel,user,toast:showToast}),
+    detail:       ()=>sel?e(Detail,   {initP:sel,props,setProps,setView,user,toast:showToast}):e(Proposals,{props,setProps,setView,setSel,user,toast:showToast}),
+    'new-proposal':()=>e(NewProposal,{setProps,setView,user,toast:showToast}),
+    parrilla:     ()=>e(Parrilla,     {props,setView,setSel}),
+    targets:      ()=>e(Targets,      {}),
+    ads:          ()=>e(Ads,          {}),
   };
+
   return e('div',{style:{display:'flex',height:'100vh',background:C.bg,color:C.ink,overflow:'hidden'}},
-    e(Sidebar,{view,setView,user,setUser,proposals}),
-    e('main',{style:{flex:1,overflow:'auto',position:'relative',background:`radial-gradient(ellipse at 80% 5%,${C.blue}06 0%,transparent 50%),${C.bg}`}},
-      notif&&e(Notif,{msg:notif.msg,type:notif.type,onClose:()=>setNotif(null)}),
-      loading&&e('div',{style:{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${C.blue},${C.cyan},${C.purple},${C.blue})`,backgroundSize:'200%',animation:'shimmer 1.5s linear infinite',zIndex:100}}),
+    e(Sidebar,{view,setView,user,setUser,props}),
+    e('main',{style:{flex:1,overflow:'auto',position:'relative',background:`radial-gradient(ellipse at 80% 5%,${C.blue}06 0%,transparent 40%),${C.bg}`}},
+      toast&&e(Toast,{msg:toast.msg,type:toast.type,onClose:()=>setToast(null)}),
+      loading&&e('div',{style:{position:'absolute',top:0,left:0,right:0,height:2,zIndex:100,background:`linear-gradient(90deg,${C.blue},${C.cyan},${C.purple})`,overflow:'hidden'}},
+        e('div',{style:{position:'absolute',top:0,bottom:0,width:'40%',background:'rgba(255,255,255,.3)',animation:'shimmer 1.2s linear infinite'}})),
       (pages[view]||(()=>null))()));
 }
 
-// ── MOUNT ─────────────────────────────────────────────────
+// Render con try/catch para mostrar error visible si falla
 try{
   ReactDOM.render(e(App),document.getElementById('root'));
 }catch(err){
-  document.getElementById('root').innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;color:#ff3b5c;"><div style="font-size:48px">⚠️</div><div style="font-size:18px;font-weight:700">Error al cargar la app</div><div style="font-size:13px;color:#6b7a99;max-width:400px;text-align:center">${err.message}</div></div>`;
-  console.error('GTAHUB Error:', err);
+  document.getElementById('root').innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;background:#07101e;color:#ff3b5c">'+
+    '<div style="font-size:48px">⚠️</div>'+
+    '<div style="font-size:18px;font-weight:700">Error al cargar</div>'+
+    '<div style="font-size:12px;color:#6b7a99;max-width:400px;text-align:center;font-family:monospace;background:#0c1524;padding:12px 16px;border-radius:8px">'+err.message+'</div>'+
+    '</div>';
+  console.error(err);
 }
 </script>
 </body>
