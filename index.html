@@ -243,50 +243,86 @@ const haversine = (a,b)=>{
   return 2*R*Math.asin(Math.sqrt(x));
 };
 
-/* ── SVG: APP ICON ─────────────────────────────────────────── */
-function AppIcon({size=32}){
-  return e('svg',{width:size,height:size,viewBox:'0 0 120 120',fill:'none'},
+/* ── SVG: GLOBAL DEFS (idénticas al manual de identidad v4) ── */
+function GlobalDefs(){
+  return e('svg',{width:0,height:0,style:{position:'absolute'},'aria-hidden':true},
     e('defs',null,
-      e('radialGradient',{id:'iconBg',cx:'40%',cy:'30%',r:'90%'},
+      // Guinda bolt gradient (small details + screw)
+      e('linearGradient',{id:'bG',x1:14,y1:6,x2:38,y2:46,gradientUnits:'userSpaceOnUse'},
+        e('stop',{offset:'0%',stopColor:'#9B1035'}),
+        e('stop',{offset:'100%',stopColor:'#5C0120'})
+      ),
+      // Yellow lightning (mascot crown bolt)
+      e('linearGradient',{id:'lG',x1:0,y1:0,x2:0,y2:1},
+        e('stop',{offset:'0%',stopColor:'#FFF176'}),
+        e('stop',{offset:'45%',stopColor:'#FFD700'}),
+        e('stop',{offset:'100%',stopColor:'#E8970A'})
+      ),
+      // Bulb body (Apagoncito)
+      e('linearGradient',{id:'bul',x1:80,y1:65,x2:145,y2:175,gradientUnits:'userSpaceOnUse'},
+        e('stop',{offset:'0%',stopColor:'#FFE088'}),
+        e('stop',{offset:'40%',stopColor:'#F5A623'}),
+        e('stop',{offset:'100%',stopColor:'#C07B10'})
+      ),
+      // Base / screw gold gradient
+      e('linearGradient',{id:'bas',x1:0,y1:0,x2:1,y2:0},
+        e('stop',{offset:'0%',stopColor:'#B8860B'}),
+        e('stop',{offset:'50%',stopColor:'#DAA520'}),
+        e('stop',{offset:'100%',stopColor:'#B8860B'})
+      ),
+      // Mascot aura
+      e('radialGradient',{id:'aura'},
+        e('stop',{offset:'0%',stopColor:'#9B1035',stopOpacity:.55}),
+        e('stop',{offset:'100%',stopColor:'#9B1035',stopOpacity:0})
+      ),
+      // Inner bulb glow
+      e('radialGradient',{id:'iglow',cx:'50%',cy:'38%'},
+        e('stop',{offset:'0%',stopColor:'#FFF8CC',stopOpacity:.75}),
+        e('stop',{offset:'100%',stopColor:'#F5A623',stopOpacity:0})
+      ),
+      // App Icon background (radial guinda)
+      e('radialGradient',{id:'iconBg',cx:'45%',cy:'35%',r:'70%'},
         e('stop',{offset:'0%',stopColor:'#8A1228'}),
+        e('stop',{offset:'55%',stopColor:'#65081F'}),
         e('stop',{offset:'100%',stopColor:'#3A0412'})
       ),
-      e('linearGradient',{id:'iconBolt',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},
-        e('stop',{offset:'0%',stopColor:'#FFF176'}),
-        e('stop',{offset:'50%',stopColor:'#FFD700'}),
+      // App Icon bolt (improved gradient)
+      e('linearGradient',{id:'iconBolt',x1:0,y1:0,x2:.3,y2:1},
+        e('stop',{offset:'0%',stopColor:'#FFE066'}),
+        e('stop',{offset:'30%',stopColor:'#FFD700'}),
         e('stop',{offset:'100%',stopColor:'#E8970A'})
+      ),
+      // Subtle top gloss
+      e('linearGradient',{id:'gloss',x1:0,y1:0,x2:0,y2:1},
+        e('stop',{offset:'0%',stopColor:'rgba(255,255,255,.18)'}),
+        e('stop',{offset:'100%',stopColor:'rgba(255,255,255,0)'})
+      ),
+      // Bolt glow filter
+      e('filter',{id:'boltGlow'},
+        e('feGaussianBlur',{stdDeviation:4,result:'blur'}),
+        e('feMerge',null,
+          e('feMergeNode',{in:'blur'}),
+          e('feMergeNode',{in:'SourceGraphic'})
+        )
       )
-    ),
+    )
+  );
+}
+
+/* ── SVG: APP ICON (idéntico al manual v4 §01) ─────────────── */
+function AppIcon({size=32, glow=false}){
+  return e('svg',{width:size,height:size,viewBox:'0 0 120 120',fill:'none'},
     e('rect',{width:120,height:120,rx:28,fill:'url(#iconBg)'}),
-    e('path',{d:'M0 0H120V38Q60 52 0 38Z',fill:'rgba(255,255,255,.16)'}),
+    e('path',{d:'M0 0H120V38Q60 52 0 38Z',fill:'url(#gloss)',opacity:.6}),
     e('ellipse',{cx:60,cy:62,rx:28,ry:34,fill:'#FFD700',opacity:.12}),
-    e('path',{d:'M73 10L42 58H62L47 110L86 54H66Z',fill:'url(#iconBolt)'}),
+    e('path',{d:'M73 10L42 58H62L47 110L86 54H66Z',fill:'url(#iconBolt)',stroke:'rgba(180,100,0,.2)',strokeWidth:1,filter:glow?'url(#boltGlow)':undefined}),
     e('path',{d:'M66 20L50 52H64L52 92',stroke:'rgba(255,255,255,.45)',strokeWidth:2.5,strokeLinecap:'round',fill:'none'})
   );
 }
 
-/* ── SVG: APAGONCITO MASCOT ────────────────────────────────── */
+/* ── SVG: APAGONCITO MASCOT (idéntico al manual v4 §08) ────── */
 function Apagoncito({size=180}){
   return e('svg',{width:size,height:size*(280/220),viewBox:'0 0 220 280',fill:'none'},
-    e('defs',null,
-      e('radialGradient',{id:'aura',cx:'50%',cy:'50%',r:'50%'},
-        e('stop',{offset:'0%',stopColor:'#FFD700',stopOpacity:.4}),
-        e('stop',{offset:'100%',stopColor:'#FFD700',stopOpacity:0})
-      ),
-      e('radialGradient',{id:'bul',cx:'45%',cy:'40%',r:'60%'},
-        e('stop',{offset:'0%',stopColor:'#FFE89C'}),
-        e('stop',{offset:'45%',stopColor:'#F5A623'}),
-        e('stop',{offset:'100%',stopColor:'#C07B10'})
-      ),
-      e('linearGradient',{id:'bG',x1:'0%',y1:'0%',x2:'0%',y2:'100%'},
-        e('stop',{offset:'0%',stopColor:'#888'}),
-        e('stop',{offset:'100%',stopColor:'#555'})
-      ),
-      e('linearGradient',{id:'lG',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},
-        e('stop',{offset:'0%',stopColor:'#FFF176'}),
-        e('stop',{offset:'100%',stopColor:'#E8970A'})
-      )
-    ),
     e('ellipse',{cx:110,cy:270,rx:52,ry:8,fill:'rgba(0,0,0,.35)'}),
     e('ellipse',{cx:110,cy:138,rx:88,ry:80,fill:'url(#aura)',opacity:.45}),
     /* arms */
@@ -389,6 +425,7 @@ function App(){
   const openReportFlow = (type)=>setReportFlow({type, step:1, subtype:null, lat:null, lng:null, severity:'moderate', description:'', name:'', phone:'', photo:null});
 
   return e('div',{className:'app'},
+    e(GlobalDefs),
     e('header',{className:'appbar'},
       e('div',{className:'appbar-icon'}, e(AppIcon,{size:22})),
       e('div',{className:'brand'}, e('span',{className:'p1'},'Apagones'), e('span',{className:'p2'},' Mid')),
