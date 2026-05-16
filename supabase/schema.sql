@@ -179,11 +179,41 @@ begin
 end $$;
 
 -- ═══════════════════════════════════════════════════════════════
--- Storage · bucket para fotos de reportes
--- Correr UNA VEZ. En el Storage Dashboard verifica que esté Public.
+-- Storage · bucket público para fotos de reportes
 -- ═══════════════════════════════════════════════════════════════
--- insert into storage.buckets (id, name, public) values ('reports', 'reports', true)
---   on conflict (id) do nothing;
--- Y políticas: Storage > reports > Policies > New Policy:
---   - SELECT: allow public
---   - INSERT: allow anon/authenticated
+insert into storage.buckets (id, name, public)
+  values ('reports', 'reports', true)
+  on conflict (id) do nothing;
+
+-- Políticas de storage para el bucket 'reports'
+drop policy if exists "reports_storage_select" on storage.objects;
+create policy "reports_storage_select" on storage.objects
+  for select to anon, authenticated
+  using (bucket_id = 'reports');
+
+drop policy if exists "reports_storage_insert" on storage.objects;
+create policy "reports_storage_insert" on storage.objects
+  for insert to anon, authenticated
+  with check (bucket_id = 'reports');
+
+-- ═══════════════════════════════════════════════════════════════
+-- RPC · estadísticas para el chat de Apagoncito
+-- ═══════════════════════════════════════════════════════════════
+create or replace function public.zone_stats(p_hours integer default 72)
+returns table(zone text, type text, n bigint)
+language sql security definer as $$
+  select coalesce(zone,'Sin zona') as zone, type, count(*)::bigint as n
+  from public.reports
+  where status = 'active'
+    and reported_at >= (now() - (p_hours || ' hours')::interval)
+  group by 1, 2
+  order by n desc
+  limit 50
+$$;
+grant execute on function public.zone_stats(integer) to anon, authenticated;
+
+-- ═══════════════════════════════════════════════════════════════
+-- Listo. Ahora en index.html (líneas 36-37):
+--   const SUPABASE_URL      = "https://xxxxx.supabase.co";
+--   const SUPABASE_ANON_KEY = "eyJhbGc...";
+-- ═══════════════════════════════════════════════════════════════

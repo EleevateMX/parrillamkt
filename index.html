@@ -122,7 +122,11 @@ input:focus,textarea:focus{outline:1px solid var(--gb)}
 .pin-res{background:linear-gradient(135deg,var(--green),#0a8a3e);opacity:.55}
 .fab{position:absolute;bottom:18px;right:16px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--gb),var(--g));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(155,16,53,.55),0 0 0 1px rgba(255,255,255,.06);z-index:400;transition:transform .12s}
 .fab:active{transform:scale(.95)}
-.fab-2{position:absolute;bottom:84px;right:24px;width:38px;height:38px;border-radius:50%;background:var(--d2);border:1px solid var(--gr2);display:flex;align-items:center;justify-content:center;z-index:400}
+.fab-2{position:absolute;bottom:84px;right:24px;width:38px;height:38px;border-radius:50%;background:rgba(28,18,24,.95);border:1px solid var(--gb);display:flex;align-items:center;justify-content:center;z-index:400;box-shadow:0 4px 18px rgba(155,16,53,.45),inset 0 0 12px rgba(155,16,53,.18);transition:transform .12s}
+.fab-2:active{transform:scale(.95)}
+.zone-tip{background:rgba(28,18,24,.95)!important;color:var(--wh)!important;border:1px solid var(--gr2)!important;border-radius:6px!important;font-size:10px!important;font-weight:600!important;padding:3px 8px!important;box-shadow:0 4px 12px rgba(0,0,0,.6)!important}
+.zone-tip::before{display:none!important}
+.leaflet-tooltip-top:before{border-top-color:var(--gr2)!important}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 24px;color:var(--gr4)}
 /* ── Hero / Brand ────────────────────────────────────────── */
 .wm{font-family:'Nunito',sans-serif;font-weight:800;letter-spacing:-.3px;line-height:1}
@@ -183,6 +187,16 @@ const SB = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
 const useMock = !SB;
 
 /* ── MOCK DATA (Mérida) ────────────────────────────────────── */
+const MOCK_ZONES = [
+  { id:1, name:'Centro',               lat:20.9674, lng:-89.6237, radius:1200 },
+  { id:2, name:'García Ginerés',       lat:20.9716, lng:-89.6280, radius: 900 },
+  { id:3, name:'Itzimná',              lat:20.9842, lng:-89.6105, radius:1100 },
+  { id:4, name:'México Norte',         lat:20.9758, lng:-89.5970, radius: 900 },
+  { id:5, name:'Francisco de Montejo', lat:20.9970, lng:-89.6500, radius:1500 },
+  { id:6, name:'Pacabtún',             lat:20.9410, lng:-89.6320, radius:1100 },
+  { id:7, name:'Caucel',               lat:21.0240, lng:-89.7140, radius:1800 },
+  { id:8, name:'Las Américas',         lat:21.0270, lng:-89.6020, radius:1200 }
+];
 const MOCK_REPORTS = [
   { id:'m1', type:'water',  subtype:'leak',     lat:20.9710, lng:-89.6230, zone:'García Ginerés',  severity:'moderate', status:'active',   reported_at:new Date(Date.now()-3.2*3600e3).toISOString(), confirmations_count:7,  description:'Fuga grande en la calle 33 con 66' },
   { id:'m2', type:'water',  subtype:'outage',   lat:20.9512, lng:-89.6021, zone:'Centro',          severity:'critical', status:'active',   reported_at:new Date(Date.now()-1.5*3600e3).toISOString(), confirmations_count:14, description:'Sin agua desde anoche' },
@@ -199,6 +213,27 @@ const api = {
     const {data, error} = await SB.from('reports_public').select('*').order('reported_at',{ascending:false}).limit(500);
     if(error){ console.error(error); return []; }
     return data || [];
+  },
+  async listZones(){
+    if(useMock) return MOCK_ZONES.slice();
+    const {data, error} = await SB.from('zones').select('*');
+    if(error){ console.error(error); return []; }
+    return (data||[]).map(z=>({id:z.id,name:z.name,lat:z.center_lat,lng:z.center_lng,radius:z.radius_m||800}));
+  },
+  async uploadPhoto(file){
+    if(useMock || !file) return null;
+    const ext = (file.name||'photo.jpg').split('.').pop();
+    const path = `${DEVICE_ID}/${Date.now()}.${ext}`;
+    const {error} = await SB.storage.from('reports').upload(path, file, {cacheControl:'3600',upsert:false,contentType:file.type});
+    if(error){ console.error('upload', error); return null; }
+    const {data} = SB.storage.from('reports').getPublicUrl(path);
+    return data?.publicUrl || null;
+  },
+  async upsertNotificationSub(zoneIds){
+    if(useMock) return true;
+    const {error} = await SB.from('notification_subs').upsert({device_id:DEVICE_ID, zone_ids:zoneIds, topic:'all'},{onConflict:'device_id'});
+    if(error) console.error('subs', error);
+    return !error;
   },
   async createReport(r){
     if(useMock){
@@ -354,6 +389,60 @@ function Wordmark({iconSize=22, fontSize=15, sub=null, light=false, gap=10}){
   );
 }
 
+/* ── Welcome Mascot (manual §05 · personaje meridano) ─────── */
+function WelcomeMascot({size=180}){
+  return e('svg',{width:size,height:size*(170/240),viewBox:'0 0 240 170',fill:'none'},
+    // Bolt left arm
+    e('path',{d:'M58 85 L42 58 L52 58 L38 30 L68 62 H56 Z',fill:'#F5A623',stroke:'#2C1A00',strokeWidth:2.5,strokeLinejoin:'round'}),
+    e('path',{d:'M50 60 L46 50',stroke:'rgba(255,255,255,.5)',strokeWidth:1.5,strokeLinecap:'round'}),
+    // Body
+    e('circle',{cx:120,cy:80,r:38,fill:'#8B4513'}),
+    e('circle',{cx:120,cy:80,r:36,fill:'#A0522D'}),
+    // Hat shadow
+    e('ellipse',{cx:120,cy:44,rx:30,ry:8,fill:'#5C3310'}),
+    // Eyes
+    e('circle',{cx:108,cy:76,r:8,fill:'white'}),
+    e('circle',{cx:108,cy:76,r:5,fill:'#1A0A00'}),
+    e('circle',{cx:110,cy:74,r:2,fill:'white'}),
+    e('circle',{cx:132,cy:76,r:8,fill:'white'}),
+    e('circle',{cx:132,cy:76,r:5,fill:'#1A0A00'}),
+    e('circle',{cx:134,cy:74,r:2,fill:'white'}),
+    // Cheeks
+    e('ellipse',{cx:99,cy:87,rx:7,ry:4,fill:'rgba(200,60,30,.3)'}),
+    e('ellipse',{cx:141,cy:87,rx:7,ry:4,fill:'rgba(200,60,30,.3)'}),
+    // Smile
+    e('path',{d:'M108 92 Q120 102 132 92',stroke:'#2C1A00',strokeWidth:2.5,strokeLinecap:'round',fill:'none'}),
+    // Arms
+    e('path',{d:'M84 80 Q65 70 55 75 Q50 78 52 83 Q54 88 60 86 Q72 82 82 80Z',fill:'#A0522D',stroke:'#5C3310',strokeWidth:2}),
+    e('path',{d:'M156 80 Q175 70 185 75 Q190 78 188 83 Q186 88 180 86 Q168 82 158 80Z',fill:'#A0522D',stroke:'#5C3310',strokeWidth:2}),
+    // Shirt
+    e('ellipse',{cx:120,cy:108,rx:28,ry:18,fill:'#65081F'}),
+    // Water drop right
+    e('path',{d:'M200 50 Q200 34 188 28 Q176 34 176 50 Q176 60 188 65 Q200 60 200 50Z',fill:'#12CBF0',stroke:'#2C1A00',strokeWidth:2.5}),
+    e('circle',{cx:185,cy:48,r:4,fill:'rgba(255,255,255,.4)'})
+  );
+}
+
+/* ── Apagoncito Sad (variante "apagada" para chat avatar) ──── */
+function ApagoncitoSad({size=64}){
+  return e('svg',{width:size,height:size*(280/220),viewBox:'0 0 220 280',fill:'none'},
+    e('ellipse',{cx:110,cy:138,rx:88,ry:80,fill:'url(#aura)',opacity:.35}),
+    e('path',{d:'M64 158 Q60 112 77 84 Q91 58 110 54 Q129 58 143 84 Q160 112 156 158 L72 180 Q69 173 64 158Z',fill:'url(#bul)',stroke:'#2C1A00',strokeWidth:3.5,strokeLinejoin:'round'}),
+    e('ellipse',{cx:90,cy:97,rx:13,ry:20,fill:'rgba(255,255,255,.28)',transform:'rotate(-18 90 97)'}),
+    // X eyes (apagado)
+    e('path',{d:'M80 125 L102 145 M102 125 L80 145',stroke:'#2C1A00',strokeWidth:5,strokeLinecap:'round'}),
+    e('path',{d:'M120 125 L142 145 M142 125 L120 145',stroke:'#2C1A00',strokeWidth:5,strokeLinecap:'round'}),
+    // Sad mouth
+    e('path',{d:'M88 168 Q110 158 132 168',stroke:'#2C1A00',strokeWidth:3,strokeLinecap:'round',fill:'none'}),
+    // Base
+    e('rect',{x:83,y:178,width:54,height:10,rx:5,fill:'#DAA520',stroke:'#2C1A00',strokeWidth:2.5}),
+    e('rect',{x:77,y:188,width:66,height:13,rx:4,fill:'#C49A2A',stroke:'#2C1A00',strokeWidth:2.5}),
+    e('circle',{cx:110,cy:215,r:8,fill:'url(#bG)',stroke:'#2C1A00',strokeWidth:2.5}),
+    // Crown bolt
+    e('path',{d:'M117 6 L104 30 H114 L101 56 L126 28 H116 Z',fill:'url(#lG)',stroke:'#2C1A00',strokeWidth:3,strokeLinejoin:'round'})
+  );
+}
+
 /* ── Sparks (chispitas del hero · manual v4) ──────────────── */
 function Sparks({count=14}){
   const sparks = useMemo(()=>Array.from({length:count},()=>{
@@ -491,7 +580,7 @@ function App(){
     ),
     e('main',{className:'view', key:view},
       view==='home' && e(Home,{reports,openReportFlow,setView,setDetail,loading}),
-      view==='map'  && e(MapView,{reports,setDetail,openReportFlow}),
+      view==='map'  && e(MapView,{reports,setDetail,openReportFlow,openChat:()=>setView('chat')}),
       view==='chat' && e(Chat,{reports,counts,setView,openReportFlow}),
       view==='menu' && e(Menu,{showToast})
     ),
@@ -504,17 +593,23 @@ function App(){
     ),
     reportFlow && e(ReportFlow,{state:reportFlow, setState:setReportFlow, onClose:()=>setReportFlow(null), onDone:async(payload)=>{
       try{
+        showToast('Enviando reporte…', 'info');
         let profileId = null;
         if(payload.name || payload.phone){
-          const p = await api.saveProfile({name:payload.name||null, phone:payload.phone||null});
+          const p = await api.saveProfile({name:payload.name||null, phone:payload.phone||null, device_id:DEVICE_ID});
           profileId = p.id;
+        }
+        let photoUrl = payload.photo || null;
+        if(payload.photoFile){
+          const uploaded = await api.uploadPhoto(payload.photoFile);
+          if(uploaded) photoUrl = uploaded;
         }
         const r = await api.createReport({
           type: payload.type, subtype: payload.subtype,
           lat: payload.lat, lng: payload.lng,
           zone: payload.zone || null, severity: payload.severity,
           description: payload.description || null,
-          reporter_id: profileId, photo_url: payload.photo || null
+          reporter_id: profileId, reporter_device: DEVICE_ID, photo_url: photoUrl
         });
         const mine = JSON.parse(localStorage.getItem('amid_mine')||'[]');
         mine.push({id:r.id, at:Date.now()});
@@ -563,12 +658,19 @@ function Home({reports, openReportFlow, setView, setDetail, loading}){
     e('section',{className:'home-hero'},
       e(Sparks,{count:14}),
       e('div',{className:'home-hero-c'},
-        e('div',{className:'mascot-glow'}, e(Apagoncito,{size:128})),
-        e('div',{className:'brand-big'},
-          e('span',{className:'h1'},'Apagones'),
-          e('span',{className:'h2'},'Mid')
+        e('div',{className:'brand-big',style:{marginBottom:14}},
+          e(Wordmark,{iconSize:28,fontSize:18})
         ),
-        e('div',{className:'tag-up'},'Mérida en vivo · v1'),
+        e('div',{style:{position:'relative',padding:'4px 0 10px'}},
+          e('div',{className:'mascot-glow'}, e(WelcomeMascot,{size:200})),
+          // ¿Qué reportamos? speech bubble
+          e('div',{style:{position:'absolute',top:14,left:'50%',transform:'translateX(-30%)',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',borderRadius:14,padding:'5px 10px',fontSize:10,fontWeight:600,color:'var(--gr5)',whiteSpace:'nowrap'}}, '¿Qué reportamos?')
+        ),
+        e('div',{style:{display:'flex',justifyContent:'space-around',width:'100%',maxWidth:280,padding:'0 4px 6px'}},
+          e('span',{style:{fontSize:11,fontWeight:800,letterSpacing:1.5,color:'var(--amb)'}}, 'APAGÓN'),
+          e('span',{style:{fontSize:11,fontWeight:800,letterSpacing:1.5,color:'var(--tb)'}}, 'FUGA / SIN AGUA')
+        ),
+        e('div',{style:{width:'80%',height:1,background:'var(--gr1)',marginBottom:6}}),
         e('p',{className:'tag-tagline'},'¿Sin luz o sin agua? Tu reporte es nuestra voz.'),
         e('div',{className:'chips-row'},
           e('span',{className:'h-chip'},'Mérida · Yucatán'),
@@ -621,10 +723,14 @@ function Home({reports, openReportFlow, setView, setDetail, loading}){
 /* ═══════════════════════════════════════════════════════════════
    MAP · Leaflet
 ═══════════════════════════════════════════════════════════════ */
-function MapView({reports, setDetail, openReportFlow}){
+function MapView({reports, setDetail, openReportFlow, openChat}){
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const zonesRef = useRef([]);
+  const [zones, setZones] = useState([]);
+
+  useEffect(()=>{ api.listZones().then(setZones); },[]);
 
   useEffect(()=>{
     if(!containerRef.current || mapRef.current) return;
@@ -637,13 +743,41 @@ function MapView({reports, setDetail, openReportFlow}){
     setTimeout(()=>m.invalidateSize(),50);
   },[]);
 
+  // Zone overlays — affected colonias
+  useEffect(()=>{
+    const m = mapRef.current; if(!m) return;
+    zonesRef.current.forEach(z=>m.removeLayer(z));
+    zonesRef.current = [];
+    if(!zones.length) return;
+    const active = reports.filter(r=>r.status==='active');
+    zones.forEach(z=>{
+      const inZone = active.filter(r=>r.zone===z.name);
+      if(!inZone.length) return;
+      const power = inZone.filter(r=>r.type==='power').length;
+      const water = inZone.filter(r=>r.type==='water').length;
+      const dom = power>water ? 'power' : 'water';
+      const color = dom==='power' ? '#0BA8C4' : '#0BA8C4'; // both teal-ish per manual; vary by intensity
+      const isPower = dom==='power';
+      const c = L.circle([z.lat, z.lng], {
+        radius: z.radius || 800,
+        color: isPower ? '#F5A623' : '#0BA8C4',
+        fillColor: isPower ? '#F5A623' : '#0BA8C4',
+        weight: 1.2, opacity: .55, fillOpacity: .12 + Math.min(.18, inZone.length*.04)
+      }).addTo(m);
+      c.bindTooltip(`${z.name} · ${inZone.length} reporte${inZone.length!==1?'s':''}`,{className:'zone-tip',direction:'top',offset:[0,-4]});
+      zonesRef.current.push(c);
+    });
+  },[zones, reports]);
+
+  // Pins
   useEffect(()=>{
     const m = mapRef.current; if(!m) return;
     markersRef.current.forEach(mk=>m.removeLayer(mk));
     markersRef.current = [];
     reports.forEach(r=>{
       const cls = r.status==='resolved' ? 'pin-res' : (r.type==='power' ? 'pin-amb' : 'pin-t');
-      const html = `<div class="pin ${cls}">${r.type==='power'?'⚡':'💧'}</div>`;
+      const ic = r.type==='power'?'⚡':'💧';
+      const html = `<div class="pin ${cls}"><span style="font-size:14px">${ic}</span></div>`;
       const icon = L.divIcon({ html, className:'', iconSize:[34,34], iconAnchor:[17,30] });
       const mk = L.marker([r.lat, r.lng],{icon}).addTo(m);
       mk.on('click',()=>setDetail(r));
@@ -663,9 +797,17 @@ function MapView({reports, setDetail, openReportFlow}){
       Ic.search(14,'var(--gr4)'),
       e('input',{className:'field',placeholder:'Buscar colonia o calle…',style:{padding:'7px 10px',fontSize:12,background:'var(--d3)'}})
     ),
-    e('div',{ref:containerRef,style:{flex:1,position:'relative'}}),
-    e('button',{className:'fab-2',onClick:locate,title:'Mi ubicación'}, Ic.pin(18,'var(--gr5)')),
-    e('button',{className:'fab',onClick:()=>openReportFlow('water')}, Ic.plus(26,'#fff'))
+    e('div',{ref:containerRef,style:{flex:1,position:'relative'}},
+      // Mérida watermark (subtle)
+      e('div',{style:{position:'absolute',top:'42%',left:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none',fontFamily:'Barlow',fontSize:34,fontWeight:600,color:'rgba(255,255,255,.06)',letterSpacing:6,zIndex:200}}, 'MÉRIDA'),
+      // Bottom location pill
+      e('div',{style:{position:'absolute',bottom:14,left:'50%',transform:'translateX(-50%)',background:'rgba(28,18,24,.92)',backdropFilter:'blur(8px)',border:'1px solid var(--gr1)',borderRadius:18,padding:'6px 14px',display:'flex',alignItems:'center',gap:7,fontSize:11,fontWeight:600,zIndex:300}},
+        e('span',{className:'dot-pulse',style:{background:'var(--gb)'}}),
+        e('span',null,'Mérida, Yucatán')
+      )
+    ),
+    e('button',{className:'fab-2',onClick:openChat,title:'Apagoncito'}, e(AppIcon,{size:20})),
+    e('button',{className:'fab',onClick:()=>openReportFlow('power'),title:'Nuevo reporte'}, Ic.plus(26,'#fff'))
   );
 }
 
@@ -724,13 +866,47 @@ function StepType({state,set,t}){
       Object.entries(t.subtypes).map(([k,label])=>{
         const sel = state.subtype===k;
         const cls = state.type==='power' ? (sel?'sel-amb':'') : (sel?'sel-t':'');
+        const ic = SUBTYPE_ICON[k];
         return e('button',{key:k,className:`card ${cls}`,style:{textAlign:'center',padding:'12px 8px'},onClick:()=>set({subtype:k})},
+          ic && e('div',{style:{display:'flex',justifyContent:'center',marginBottom:4}}, ic(28, t.color)),
           e('div',{className:'font-n',style:{fontWeight:800,fontSize:12,color:t.color}}, label),
+          e('div',{style:{fontSize:9,color:'var(--gr4)',marginTop:2}}, SUBTYPE_DESC[k]||'')
         );
       })
-    )
+    ),
+    state.subtype && e('button',{onClick:()=>set({subtype:null}),style:{display:'block',marginTop:10,fontSize:11,color:'var(--gr4)'}}, '← Cambiar tipo principal')
   );
 }
+
+const SUBTYPE_ICON = {
+  home:     (s,c)=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},
+    e('path',{d:'M3 11l9-8 9 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',stroke:c,strokeWidth:1.8,strokeLinejoin:'round'}),
+    e('path',{d:'M9 22V14h6v8',stroke:c,strokeWidth:1.8,strokeLinejoin:'round'}),
+    e('circle',{cx:12,cy:13,r:5,stroke:c,strokeWidth:1.5,fill:'none',opacity:.5}),
+    e('path',{d:'M9 10l6 6M15 10l-6 6',stroke:c,strokeWidth:1.5,strokeLinecap:'round',opacity:.5})),
+  lighting: (s,c)=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},
+    e('path',{d:'M12 2v4M10 6h4l-1 5h-2z',stroke:c,strokeWidth:1.8,strokeLinejoin:'round',fill:c,fillOpacity:.15}),
+    e('path',{d:'M12 11v11',stroke:c,strokeWidth:1.8,strokeLinecap:'round'}),
+    e('path',{d:'M9 22h6',stroke:c,strokeWidth:1.8,strokeLinecap:'round'})),
+  leak:     (s,c)=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},
+    e('path',{d:'M12 2C12 2 5 9.5 5 14.5C5 18.09 8.13 21 12 21C15.87 21 19 18.09 19 14.5C19 9.5 12 2 12 2Z',fill:c,fillOpacity:.85}),
+    e('circle',{cx:14,cy:13,r:2,fill:'rgba(255,255,255,.5)'})),
+  outage:   (s,c)=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},
+    e('path',{d:'M12 2C12 2 5 9.5 5 14.5C5 18.09 8.13 21 12 21C15.87 21 19 18.09 19 14.5C19 9.5 12 2 12 2Z',stroke:c,strokeWidth:1.8,fill:'none'}),
+    e('path',{d:'M5 5l14 14',stroke:c,strokeWidth:2,strokeLinecap:'round'})),
+  pressure: (s,c)=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},
+    e('circle',{cx:12,cy:13,r:8,stroke:c,strokeWidth:1.8}),
+    e('path',{d:'M12 13l-3-3',stroke:c,strokeWidth:1.8,strokeLinecap:'round'}),
+    e('path',{d:'M9 6V3M15 6V3',stroke:c,strokeWidth:1.5,strokeLinecap:'round'})),
+  quality:  (s,c)=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},
+    e('path',{d:'M12 2C12 2 5 9.5 5 14.5C5 18.09 8.13 21 12 21C15.87 21 19 18.09 19 14.5C19 9.5 12 2 12 2Z',fill:c,fillOpacity:.4}),
+    e('path',{d:'M9 16h6M10 12h4',stroke:'#fff',strokeWidth:1.5,strokeLinecap:'round'})),
+};
+const SUBTYPE_DESC = {
+  home:'En mi domicilio', lighting:'Foco de calle fundido',
+  leak:'Fuga visible', outage:'Sin agua del todo',
+  pressure:'Presión baja', quality:'Color, sabor, olor'
+};
 
 function StepLocation({state,set,t}){
   const ref = useRef(null), mapRef=useRef(null), markerRef=useRef(null);
@@ -785,7 +961,7 @@ function StepDetails({state,set,t}){
   const onPhoto = (ev)=>{
     const f = ev.target.files?.[0]; if(!f) return;
     const reader = new FileReader();
-    reader.onload = ()=>set({photo:reader.result});
+    reader.onload = ()=>set({photo:reader.result, photoFile:f});
     reader.readAsDataURL(f);
   };
   return e('div',null,
@@ -801,7 +977,7 @@ function StepDetails({state,set,t}){
     state.photo
       ? e('div',{style:{position:'relative',marginBottom:12}},
           e('img',{src:state.photo,className:'report-photo'}),
-          e('button',{onClick:()=>set({photo:null}),style:{position:'absolute',top:6,right:6,background:'rgba(0,0,0,.75)',borderRadius:'50%',width:26,height:26,display:'flex',alignItems:'center',justifyContent:'center'}}, Ic.x(12,'#fff'))
+          e('button',{onClick:()=>set({photo:null,photoFile:null}),style:{position:'absolute',top:6,right:6,background:'rgba(0,0,0,.75)',borderRadius:'50%',width:26,height:26,display:'flex',alignItems:'center',justifyContent:'center'}}, Ic.x(12,'#fff'))
         )
       : e('label',{style:{display:'block',background:'var(--d3)',border:'1px dashed var(--gr2)',borderRadius:9,padding:16,textAlign:'center',marginBottom:12,cursor:'pointer'}},
           Ic.cam(22,'var(--gr4)'),
@@ -924,14 +1100,14 @@ function Chat({reports, counts, setView, openReportFlow}){
 
   return e('div',{style:{display:'flex',flexDirection:'column',flex:1,minHeight:0}},
     e('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderBottom:'1px solid var(--gr1)',background:'linear-gradient(160deg,var(--d4),#1A1020)'}},
-      e('div',{style:{width:46,height:46,position:'relative'}},
-        e('div',{style:{position:'absolute',inset:-3,borderRadius:'50%',border:'1px solid rgba(245,166,35,.18)',animation:'ring 3s ease-in-out infinite'}}),
-        e(Apagoncito,{size:46})
+      e('div',{style:{width:48,height:48,position:'relative',flexShrink:0}},
+        e('div',{style:{position:'absolute',inset:-4,borderRadius:'50%',border:'1px solid rgba(245,166,35,.18)',animation:'ring 3s ease-in-out infinite'}}),
+        e(ApagoncitoSad,{size:48})
       ),
       e('div',null,
-        e('div',{className:'font-n',style:{fontWeight:900,fontSize:14,background:'linear-gradient(135deg,var(--ambb),var(--amb))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}, 'Apagoncito'),
+        e('div',{className:'font-n',style:{fontWeight:900,fontSize:15,background:'linear-gradient(135deg,var(--ambb),var(--amb))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}, 'Apagoncito'),
         e('div',{style:{fontSize:10,color:'var(--gr4)',display:'flex',alignItems:'center',gap:5}},
-          e('span',{style:{width:5,height:5,borderRadius:'50%',background:'#22C55E',boxShadow:'0 0 4px #22C55E'}}), 'Asistente · Mérida')
+          e('span',{style:{width:5,height:5,borderRadius:'50%',background:'#22C55E',boxShadow:'0 0 4px #22C55E'}}), 'Asistente de incidencias · Mérida')
       )
     ),
     e('div',{ref:scrollRef,style:{flex:1,overflowY:'auto',padding:'12px 12px 6px',display:'flex',flexDirection:'column',gap:8}},
@@ -968,6 +1144,7 @@ function Menu({showToast}){
       if(p!=='granted'){ showToast('Permiso denegado para notificaciones','err'); return; }
     }
     const v = !notif; setNotif(v); localStorage.setItem('amid_notif', v?'1':'0');
+    await api.upsertNotificationSub(v ? [] : []); // [] = todas las zonas; reemplazar con selección
     showToast(v?'Notificaciones activadas':'Notificaciones desactivadas', v?'ok':'info');
   };
 
