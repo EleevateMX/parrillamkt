@@ -2,597 +2,931 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>GTAHUB · Content Hub</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no"/>
+<meta name="theme-color" content="#65081F"/>
+<meta name="description" content="ApagonesMid — Reporta apagones y fugas de agua en Mérida, Yucatán. Tu reporte es nuestra voz."/>
+<title>ApagonesMid · Mérida en vivo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Barlow:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
+:root{
+  --g:#65081F;--gd:#5C0120;--gm:#7D0A27;--gb:#9B1035;
+  --gl:rgba(101,8,31,.15);--gg:rgba(101,8,31,.5);
+  --t:#0BA8C4;--tb:#12CBF0;--td:#077E94;
+  --amb:#F5A623;--ambb:#FFD700;--ambd:#C07B10;
+  --bk:#060406;--d1:#0D080B;--d2:#150E12;--d3:#1C1218;--d4:#231620;
+  --gr1:#2A1822;--gr2:#3A2430;--gr3:#664455;--gr4:#998899;--gr5:#CCBBCC;
+  --wh:#F4EEF2;
+  --green:#22C55E;--red:#EF4444;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body,#root{height:100%;font-family:'Poppins',sans-serif}
-body{background:#07101e;overflow:hidden;color:#eef2ff}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
-input,select,textarea,button{font-family:'Poppins',sans-serif}
-textarea:focus,input:focus,select:focus{outline:2px solid rgba(26,115,232,.5);outline-offset:0}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes shimmer{0%{left:-100%}100%{left:200%}}
-@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(26,115,232,.4)}50%{box-shadow:0 0 35px rgba(0,212,255,.5)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-.page{animation:fadeUp .25s ease both}
-.nav-btn:hover{background:rgba(77,159,255,.14)!important;color:#4d9fff!important}
-.card-hover:hover{border-color:rgba(26,115,232,.5)!important;transform:translateY(-2px);box-shadow:0 16px 48px rgba(0,0,0,.5)!important;cursor:pointer}
-.card-hover{transition:all .18s ease}
-.btn-ani{transition:all .18s ease}
-.btn-ani:hover{filter:brightness(1.12);transform:translateY(-1px)}
-.btn-ani:active{transform:translateY(0)}
-.logo-pulse{animation:glow 3s ease-in-out infinite}
+html,body,#root{height:100%;font-family:'Barlow',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:var(--bk);color:var(--wh);font-size:15px;line-height:1.55;overflow:hidden}
+button,input,select,textarea{font-family:inherit;color:inherit;background:none;border:none;outline:none}
+button{cursor:pointer}
+input:focus,textarea:focus{outline:1px solid var(--gb)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+.font-n{font-family:'Nunito',sans-serif}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 14px rgba(101,8,31,.55)) drop-shadow(0 0 36px rgba(101,8,31,.22))}50%{filter:drop-shadow(0 0 26px rgba(155,16,53,.8)) drop-shadow(0 0 60px rgba(101,8,31,.38))}}
+@keyframes blink{0%,93%,97%,100%{transform:scaleY(1)}95%{transform:scaleY(.06)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes ring{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:.05}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes spk{0%{opacity:0}20%{opacity:.7}100%{opacity:0;transform:translate(var(--tx,20px),var(--ty,-50px))}}
+.mascot-glow{animation:glow 3.5s ease-in-out infinite}
+.eye-b{animation:blink 5s ease-in-out infinite;transform-origin:center}
+.app{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  max-width:480px;margin:0 auto;background:var(--bk);
+  box-shadow:0 0 0 1px var(--gr1),0 30px 80px rgba(0,0,0,.6);
+}
+.view{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;animation:fadeIn .2s ease}
+.appbar{
+  display:flex;align-items:center;gap:8px;padding:14px 16px 10px;
+  background:linear-gradient(180deg,var(--d2),rgba(21,14,18,.85));
+  border-bottom:1px solid var(--gr1);position:sticky;top:0;z-index:50;backdrop-filter:blur(10px)
+}
+.appbar-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:radial-gradient(ellipse at 40% 30%,#8A1228,#3A0412)}
+.brand{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;line-height:1}
+.brand .p1{color:var(--wh)}
+.brand .p2{color:var(--gr4);font-weight:400}
+.counter{display:inline-flex;align-items:center;gap:4px;background:var(--d3);border:1px solid var(--gr1);border-radius:14px;padding:3px 9px;font-size:11px;font-weight:800;letter-spacing:.3px}
+.counter.apag{color:var(--amb)}
+.counter.agua{color:var(--tb)}
+.nav{display:flex;background:var(--d1);border-top:1px solid var(--gr1);padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--gr4);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;transition:color .15s;position:relative}
+.nav button.on{color:var(--wh)}
+.nav button.on::before{content:'';position:absolute;top:0;left:30%;right:30%;height:2px;background:var(--gb);border-radius:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:10px;font-weight:700;font-size:13px;font-family:'Barlow';letter-spacing:.3px;transition:filter .15s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--g);color:#fff}
+.btn-p:hover{filter:brightness(1.15)}
+.btn-t{background:var(--t);color:#fff}
+.btn-amb{background:linear-gradient(135deg,var(--amb),var(--ambb));color:#1a1000}
+.btn-gh{background:transparent;border:1px solid var(--gr2);color:var(--gr5)}
+.btn-gh:hover{border-color:var(--gr3);color:var(--wh)}
+.btn-suc{background:var(--green);color:#fff}
+.card{background:var(--d2);border:1px solid var(--gr1);border-radius:12px;padding:14px;transition:border-color .15s,background .15s}
+.card.sel-amb{border-color:var(--amb);background:rgba(245,166,35,.06)}
+.card.sel-t{border-color:var(--t);background:rgba(11,168,196,.06)}
+.field{background:var(--d3);border:1px solid var(--gr1);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--wh);width:100%;font-family:'Barlow'}
+.field::placeholder{color:var(--gr3)}
+.lbl-up{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gr4);margin-bottom:6px;display:block}
+.sheet{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);animation:fadeIn .15s ease}
+.sheet-inner{width:100%;max-width:480px;background:var(--d2);border-radius:18px 18px 0 0;border:1px solid rgba(101,8,31,.4);border-bottom:none;padding:18px 18px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;animation:slideUp .22s ease}
+.sheet-pill{width:36px;height:4px;background:var(--gr2);border-radius:2px;margin:0 auto 14px}
+.progress{display:flex;gap:4px;margin-bottom:14px}
+.progress-bar{height:2px;border-radius:1px;flex:1;background:var(--gr1)}
+.progress-bar.active{background:var(--g)}
+.progress-bar.done{background:var(--gb)}
+.h1{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;line-height:1.1;margin-bottom:3px}
+.h2{font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;line-height:1.2}
+.sub{font-size:11px;color:var(--gr4);margin-bottom:12px}
+.sev-row{display:flex;gap:6px}
+.sev{flex:1;padding:9px 4px;border:1px solid var(--gr2);border-radius:9px;text-align:center;font-size:11px;font-weight:700;color:var(--gr5);display:flex;align-items:center;justify-content:center;gap:5px;background:transparent;transition:all .12s}
+.sev.on{background:rgba(245,166,35,.08);border-color:var(--amb);color:var(--amb)}
+.sev .dot{width:8px;height:8px;border-radius:50%}
+.chip{font-size:10px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:5px 11px;color:var(--gr5);white-space:nowrap;flex-shrink:0;transition:all .12s}
+.chip:hover{background:rgba(255,255,255,.09);color:var(--wh)}
+.chip.amb{color:var(--amb);border-color:rgba(245,166,35,.25)}
+.chip.t{color:var(--tb);border-color:rgba(18,203,240,.25)}
+.toast{position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:300;background:rgba(21,14,18,.96);backdrop-filter:blur(12px);border:1px solid var(--gr2);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.6);animation:fadeUp .2s ease;max-width:90vw}
+.toast.ok{border-color:rgba(34,197,94,.4);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,.4);color:var(--red)}
+.toast.info{border-color:rgba(18,203,240,.4);color:var(--tb)}
+.dot-pulse{width:8px;height:8px;border-radius:50%;animation:pulse 1.6s ease infinite}
+.menu-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--gr1);width:100%;text-align:left;transition:background .1s}
+.menu-item:hover{background:var(--d3)}
+.menu-item:last-child{border-bottom:none}
+.menu-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.bubble{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--gr5);max-width:90%}
+.bubble strong{color:var(--ambb);font-family:'Nunito';font-weight:800}
+.bubble-me{margin-left:auto;background:var(--gd);color:var(--wh);border-radius:14px 14px 4px 14px;border-color:rgba(155,16,53,.3)}
+.leaflet-container{background:var(--d1)!important;height:100%;width:100%}
+.leaflet-control-attribution{font-size:9px!important;background:rgba(6,4,6,.7)!important;color:var(--gr3)!important}
+.leaflet-control-attribution a{color:var(--gr4)!important}
+.leaflet-control-zoom a{background:var(--d2)!important;color:var(--wh)!important;border-color:var(--gr1)!important}
+.pin{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.15)}
+.pin>*{transform:rotate(45deg)}
+.pin-amb{background:linear-gradient(135deg,var(--amb),var(--ambd))}
+.pin-t{background:linear-gradient(135deg,var(--tb),var(--td))}
+.pin-res{background:linear-gradient(135deg,var(--green),#0a8a3e);opacity:.55}
+.fab{position:absolute;bottom:18px;right:16px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--gb),var(--g));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(155,16,53,.55),0 0 0 1px rgba(255,255,255,.06);z-index:400;transition:transform .12s}
+.fab:active{transform:scale(.95)}
+.fab-2{position:absolute;bottom:84px;right:24px;width:38px;height:38px;border-radius:50%;background:var(--d2);border:1px solid var(--gr2);display:flex;align-items:center;justify-content:center;z-index:400}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 24px;color:var(--gr4)}
+.spinner{width:22px;height:22px;border:2px solid var(--gr2);border-top-color:var(--gb);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.report-photo{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--gr1)}
+.hidden{display:none!important}
+@media (max-width:480px){.app{box-shadow:none}}
 </style>
 </head>
 <body>
 <div id="root"></div>
+
 <script>
-// ═══════════════════════════════════════════════════
-//  ⚙️  GOOGLE SHEETS URL
-//  Pega aquí la URL de tu Apps Script Web App
-//  Deja vacío "" para modo demo con datos de ejemplo
-// ═══════════════════════════════════════════════════
-const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwAdPqLQyjR1VYmuIOHnxdBGirPs_W09j_ku4jMLmS_yIjRVyb9F6A8_d7kdMfp7uscxQ/exec";
-// ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+   ApagonesMid · v1
+   Configura tu proyecto Supabase abajo. Si lo dejas vacío,
+   la app corre con datos mock (Mérida) para demo.
+   Schema SQL: ver /supabase/schema.sql
+═══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL = "";          // ej. "https://xxxxx.supabase.co"
+const SUPABASE_ANON_KEY = "";     // anon public key
+const MERIDA = { lat: 20.9670, lng: -89.5926, zoom: 13 };
+const REMINDER_HOURS = 24;        // horas para preguntar "¿ya se resolvió?"
 
-const {useState,useEffect} = React;
+const {useState, useEffect, useRef, useCallback, useMemo} = React;
+const e = React.createElement;
 
-// ── INLINE SVG ICONS (sin CDN externo) ─────────────
-// Cada icono es una función (size, color) => JSX
-function Icon({d, size=16, color='currentColor', fill='none', strokeWidth=1.8, style:sx}){
-  return React.createElement('svg',{
-    width:size,height:size,viewBox:'0 0 24 24',fill,stroke:color,
-    strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{flexShrink:0,...sx}},
-    React.createElement('path',{d}));
-}
-function IconMulti({paths,size=16,color='currentColor',strokeWidth=1.8,style:sx}){
-  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color,strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{flexShrink:0,...sx}},
-    paths.map((p,i)=>React.createElement('path',{key:i,d:p})));
-}
+/* ── DEVICE ID (anon) ──────────────────────────────────────── */
+const DEVICE_ID = (()=>{ try{
+  let d = localStorage.getItem('amid_did');
+  if(!d){ d = 'd_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); localStorage.setItem('amid_did', d); }
+  return d;
+}catch{ return 'd_anon_' + Date.now(); }})();
 
-const IC = {
-  Dashboard:  (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z','M9 22V12h6v10']}),
-  Calendar:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M8 2v4','M16 2v4','M3 10h18','M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z']}),
-  FileText:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z','M14 2v6h6','M16 13H8','M16 17H8','M10 9H8']}),
-  Target:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z','M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z']}),
-  Megaphone:  (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M3 11l19-9-9 19-2-8-8-2z']}),
-  CheckCircle:(s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M22 11.08V12a10 10 0 1 1-5.93-9.14','M22 4 12 14.01l-3-3']}),
-  XCircle:    (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M15 9l-6 6','M9 9l6 6']}),
-  Clock:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 6v6l4 2']}),
-  Eye:        (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z','M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z']}),
-  Plus:       (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 5v14','M5 12h14']}),
-  LogOut:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4','M16 17l5-5-5-5','M21 12H9']}),
-  Heart:      (s,c,f)=>React.createElement(IconMulti,{size:s,color:c,paths:['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']}),
-  MessageCircle:(s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z']}),
-  Bookmark:   (s,c)=>React.createElement(Icon,{d:'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',size:s,color:c}),
-  Send:       (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M22 2 11 13','M22 2 15 22 11 13 2 9l20-7z']}),
-  MoreH:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,strokeWidth:2.5,paths:['M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z']}),
-  TrendUp:    (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M23 6l-9.5 9.5-5-5L1 18','M17 6h6v6']}),
-  Dollar:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 1v22','M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6']}),
-  X:          (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M18 6 6 18','M6 6l12 12']}),
-  ChevronR:   (s,c)=>React.createElement(Icon,{d:'M9 18l6-6-6-6',size:s,color:c}),
-  Film:       (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M2 8h20','M2 16h20','M8 2v20','M16 2v20','M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z']}),
-  Camera:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z','M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z']}),
-  Play:       (s,c,f)=>React.createElement(Icon,{d:'M5 3l14 9-14 9V3z',size:s,color:c,fill:f||'none'}),
-  Layers:     (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 2 2 7l10 5 10-5-10-5z','M2 17l10 5 10-5','M2 12l10 5 10-5']}),
-  ArrowLeft:  (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M19 12H5','M12 19l-7-7 7-7']}),
-  Zap:        (s,c)=>React.createElement(Icon,{d:'M13 2 3 14h9l-1 8 10-12h-9l1-8z',size:s,color:c}),
-  Shield:     (s,c)=>React.createElement(Icon,{d:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',size:s,color:c}),
-  BarChart:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M18 20V10','M12 20V4','M6 20v-6']}),
-  Alert:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 8v4','M12 16h.01']}),
-  Radio:      (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M5 12.55a11 11 0 0 1 14.08 0','M1.42 9a16 16 0 0 1 21.16 0','M8.53 16.11a6 6 0 0 1 6.95 0','M12 20h.01']}),
-  Star:       (s,c)=>React.createElement(Icon,{d:'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',size:s,color:c}),
-  Activity:   (s,c)=>React.createElement(IconMulti,{size:s,color:c,paths:['M22 12h-4l-3 9L9 3l-3 9H2']}),
-};
+/* ── SUPABASE CLIENT ──────────────────────────────────────── */
+const SB = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:false}})
+  : null;
+const useMock = !SB;
 
-// ── THEME ────────────────────────────────────────────
-const C={
-  bg:'#07101e',bg2:'#0c1524',bg3:'#101d30',bg4:'#162238',card:'#0e1929',
-  blue:'#1a73e8',blueB:'#4d9fff',cyan:'#00d4ff',
-  gold:'#f4c542',red:'#ff3b5c',green:'#00e676',eGrn:'#22b14c',
-  purple:'#a855f7',pink:'#ff6eb4',
-  ink:'#eef2ff',dim:'#6b7a99',mute:'#2d3a52',
-  line:'rgba(255,255,255,0.055)',lineM:'rgba(255,255,255,0.1)',
-};
-
-// ── DATA ─────────────────────────────────────────────
-const USERS=[
-  {id:1,name:'FergunsonTV',role:'admin',av:'FG',color:C.blue,  tag:'@FergunsonTV',emoji:'📺'},
-  {id:2,name:'Volter',     role:'admin',av:'VL',color:C.gold,  tag:'@Volter',     emoji:'⚡'},
-  {id:3,name:'Kevinagre',  role:'admin',av:'KA',color:C.eGrn,  tag:'@Kevinagre',  emoji:'🎮'},
-  {id:4,name:'MeDed',      role:'mkt',  av:'MD',color:C.purple,tag:'@MeDed',      emoji:'🎯'},
-  {id:5,name:'E.Yaaami',   role:'mkt',  av:'EY',color:C.pink,  tag:'@E.Yaaami',   emoji:'✨'},
+/* ── MOCK DATA (Mérida) ────────────────────────────────────── */
+const MOCK_REPORTS = [
+  { id:'m1', type:'water',  subtype:'leak',     lat:20.9710, lng:-89.6230, zone:'García Ginerés',  severity:'moderate', status:'active',   reported_at:new Date(Date.now()-3.2*3600e3).toISOString(), confirmations_count:7,  description:'Fuga grande en la calle 33 con 66' },
+  { id:'m2', type:'water',  subtype:'outage',   lat:20.9512, lng:-89.6021, zone:'Centro',          severity:'critical', status:'active',   reported_at:new Date(Date.now()-1.5*3600e3).toISOString(), confirmations_count:14, description:'Sin agua desde anoche' },
+  { id:'m3', type:'water',  subtype:'pressure', lat:20.9820, lng:-89.6100, zone:'Itzimná',         severity:'low',      status:'active',   reported_at:new Date(Date.now()-6*3600e3).toISOString(),   confirmations_count:2,  description:'Presión baja en colonia' },
+  { id:'m4', type:'power',  subtype:'home',     lat:20.9605, lng:-89.5762, zone:'Francisco de Montejo', severity:'moderate', status:'resolved', reported_at:new Date(Date.now()-26*3600e3).toISOString(),  resolved_at:new Date(Date.now()-2*3600e3).toISOString(), confirmations_count:9,  description:'Apagón sector norte' },
+  { id:'m5', type:'water',  subtype:'leak',     lat:20.9410, lng:-89.6310, zone:'Pacabtún',        severity:'moderate', status:'active',   reported_at:new Date(Date.now()-9*3600e3).toISOString(),   confirmations_count:4,  description:'Fuga banqueta' },
+  { id:'m6', type:'power',  subtype:'lighting', lat:20.9755, lng:-89.5980, zone:'México Norte',    severity:'low',      status:'active',   reported_at:new Date(Date.now()-22*3600e3).toISOString(),  confirmations_count:1,  description:'Foco de poste fundido' },
 ];
-const ROLE={
-  admin:{label:'Admin / Staff',  color:C.gold,  Icon:(s)=>IC.Shield(s,C.gold)},
-  mkt:  {label:'Usuario de MKT', color:C.purple,Icon:(s)=>IC.Star(s,C.purple)},
+
+/* ── API LAYER ─────────────────────────────────────────────── */
+const api = {
+  async listReports(){
+    if(useMock) return MOCK_REPORTS.slice();
+    const {data, error} = await SB.from('reports_public').select('*').order('reported_at',{ascending:false}).limit(500);
+    if(error){ console.error(error); return []; }
+    return data || [];
+  },
+  async createReport(r){
+    if(useMock){
+      const nr = { id:'l_'+Date.now(), reported_at:new Date().toISOString(), confirmations_count:0, status:'active', ...r };
+      MOCK_REPORTS.unshift(nr);
+      return nr;
+    }
+    const {data, error} = await SB.from('reports').insert(r).select().single();
+    if(error) throw error;
+    return data;
+  },
+  async confirmReport(reportId, kind){
+    if(useMock){
+      const m = MOCK_REPORTS.find(x=>x.id===reportId);
+      if(m){
+        if(kind==='resolved'){ m.status='resolved'; m.resolved_at=new Date().toISOString(); }
+        else { m.confirmations_count = (m.confirmations_count||0)+1; }
+      }
+      return true;
+    }
+    const {error} = await SB.from('confirmations').insert({report_id:reportId, device_id:DEVICE_ID, kind});
+    if(error && !String(error.message||'').includes('duplicate')) throw error;
+    return true;
+  },
+  async saveProfile(p){
+    if(useMock) return {id:'p_'+Date.now(), ...p};
+    const {data, error} = await SB.from('profiles').insert(p).select().single();
+    if(error) throw error;
+    return data;
+  },
+  subscribeRealtime(onChange){
+    if(useMock) return ()=>{};
+    const ch = SB.channel('reports-feed')
+      .on('postgres_changes',{event:'*',schema:'public',table:'reports'}, onChange)
+      .subscribe();
+    return ()=>SB.removeChannel(ch);
+  }
 };
-const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-const WEEKS=['Semana 1','Semana 2','Semana 3','Semana 4'];
-const MOCK=[
-  {id:1,title:'Reel: Top 5 misiones épicas',type:'reel',author:'MeDed',av:'MD',status:'pending',week:'Semana 1',day:'Lunes',time:'18:00',caption:'¿Cuál fue tu misión favorita? 🎮\n¡Comenta y gana HUBCoins! 👇\n\n#GTAHUB #GTA5 #Gaming',img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#GTA5','#Gaming','#MX'],cta:'Únete → link en bio',target:'Gamers 18–28, México',platform:'Instagram Reels',date:'15 May 2026',notes:'',reach:'12,000–18,000',budget:null},
-  {id:2,title:'Post: Evento Robbery ×2',type:'post',author:'E.Yaaami',av:'EY',status:'approved',week:'Semana 1',day:'Miércoles',time:'20:00',caption:'🚨 EVENTO ESPECIAL HOY 🚨\nRobbery ×2 toda la noche\n⏰ 8pm – 12am CST',img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Evento','#GTA'],cta:'Actívate en el servidor',target:'Comunidad 16–35',platform:'Instagram + Stories',date:'14 May 2026',notes:'Aprobado por Volter ✓',reach:'8,000–12,000',budget:null},
-  {id:3,title:'Story: Poll ¿Tu rol favorito?',type:'story',author:'MeDed',av:'MD',status:'review',week:'Semana 1',day:'Viernes',time:'14:00',caption:'¿Cuál es tu rol favorito en GTAHUB? Vota 👆',img:'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Poll'],cta:'Vota en la story',target:'Toda la comunidad',platform:'Instagram Stories',date:'16 May 2026',notes:'Ajustar diseño del poll.',reach:'6,000–10,000',budget:null},
-  {id:4,title:'Video: Highlight del streamer',type:'video',author:'E.Yaaami',av:'EY',status:'rejected',week:'Semana 2',day:'Martes',time:'19:00',caption:'¡El momento del siglo en GTAHUB! 🔥',img:'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Clip'],cta:'Síguenos para más clips',target:'Fans streamers',platform:'Instagram Reels',date:'20 May 2026',notes:'Re-grabar en 1080p mínimo.',reach:'15,000–25,000',budget:null},
-  {id:5,title:'Carrusel: Guía de roles',type:'carousel',author:'MeDed',av:'MD',status:'pending',week:'Semana 2',day:'Jueves',time:'12:00',caption:'Conoce todos los roles 📋\nDesliza para ver más →',img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=500&fit=crop',hashtags:['#GTAHUB','#Guía','#Roleplay'],cta:'Regístrate - link en bio',target:'Nuevos jugadores 16–25',platform:'Instagram Carrusel',date:'22 May 2026',notes:'',reach:'20,000–35,000',budget:500},
-];
-const TARGETS=[
-  {id:1,name:'Gamers MX Core',  age:'18–28',gender:'70% M / 30% F',interests:['GTA Online','Roleplay','Twitch','Discord'],location:'CDMX, MTY, GDL',size:'180K',platform:'Instagram + TikTok',color:C.blueB},
-  {id:2,name:'Comunidad Activa',age:'16–35',gender:'65% M / 35% F',interests:['Gaming','Comunidades','Servidores RP'],location:'México Nacional',size:'320K',platform:'Instagram + FB',color:C.eGrn},
-  {id:3,name:'Fans Streamers',  age:'15–25',gender:'55% M / 45% F',interests:['Twitch','YouTube Gaming','Clips'],location:'LATAM',size:'500K',platform:'TikTok + Reels',color:C.purple},
-  {id:4,name:'Jugadores Nuevos',age:'16–22',gender:'60% M / 40% F',interests:['GTA','Juegos Online','Roleplay'],location:'México',size:'90K',platform:'TikTok + Reels',color:C.gold},
-];
-const CAMPS=[
-  {id:1,name:'Lanzamiento Semana 1',budget:2500,spent:1840,platform:'Instagram',       status:'active',   reach:'42,000', startDate:'May 13',endDate:'May 19',color:C.blueB},
-  {id:2,name:'Evento Robbery ×2',   budget:800, spent:800, platform:'Instagram Stories',status:'completed',reach:'15,000', startDate:'May 14',endDate:'May 14',color:C.eGrn},
-  {id:3,name:'Captación Roleplay',  budget:3000,spent:0,   platform:'TikTok + Reels',  status:'scheduled',reach:'80,000+',startDate:'May 20',endDate:'May 26',color:C.purple},
-];
-const STS={
-  pending: {label:'Pendiente',  color:C.cyan,  bg:'rgba(0,212,255,.12)', icon:(s)=>IC.Clock(s,C.cyan)},
-  approved:{label:'Aprobado',   color:C.green, bg:'rgba(0,230,118,.12)', icon:(s)=>IC.CheckCircle(s,C.green)},
-  review:  {label:'En Revisión',color:C.gold,  bg:'rgba(244,197,66,.12)',icon:(s)=>IC.Eye(s,C.gold)},
-  rejected:{label:'Rechazado',  color:C.red,   bg:'rgba(255,59,92,.12)', icon:(s)=>IC.XCircle(s,C.red)},
+
+/* ── HELPERS ───────────────────────────────────────────────── */
+const TYPE_META = {
+  power: { label:'Sin luz',  color:'var(--amb)', emoji:'⚡', subtypes:{ home:'En casa', lighting:'Alumbrado público' } },
+  water: { label:'Sin agua', color:'var(--tb)',  emoji:'💧', subtypes:{ leak:'Fuga', outage:'Corte', pressure:'Presión', quality:'Calidad' } }
 };
-const TPS={
-  reel:    {label:'Reel',    color:C.purple,icon:(s)=>IC.Film(s,C.purple)},
-  post:    {label:'Post',    color:C.blueB, icon:(s)=>IC.Camera(s,C.blueB)},
-  story:   {label:'Story',   color:C.red,   icon:(s)=>IC.Radio(s,C.red)},
-  video:   {label:'Video',   color:C.gold,  icon:(s)=>IC.Play(s,C.gold)},
-  carousel:{label:'Carrusel',color:C.eGrn, icon:(s)=>IC.Layers(s,C.eGrn)},
+const SEV_META = {
+  low:      { label:'Leve',     color:'var(--green)', dot:'#22C55E' },
+  moderate: { label:'Moderado', color:'var(--amb)',   dot:'#F5A623' },
+  critical: { label:'Crítico',  color:'var(--red)',   dot:'#EF4444' }
+};
+const fmtAgo = (iso)=>{
+  if(!iso) return '';
+  const s = (Date.now()-new Date(iso).getTime())/1000;
+  if(s<60) return 'hace un momento';
+  if(s<3600) return `hace ${Math.floor(s/60)} min`;
+  if(s<86400) return `hace ${Math.floor(s/3600)} h`;
+  return `hace ${Math.floor(s/86400)} d`;
+};
+const haversine = (a,b)=>{
+  const R=6371,toR=x=>x*Math.PI/180;
+  const dLat=toR(b.lat-a.lat),dLng=toR(b.lng-a.lng);
+  const x=Math.sin(dLat/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
 };
 
-// ── API ───────────────────────────────────────────────
-const api={
-  async get(){if(!SHEETS_API_URL)return MOCK;try{const r=await fetch(SHEETS_API_URL+'?action=getProposals');const d=await r.json();return d.proposals||[];}catch{return MOCK;}},
-  async add(p){if(!SHEETS_API_URL)return{id:Date.now()};try{const r=await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'addProposal',proposal:p})});return r.json();}catch{return{id:Date.now()};}},
-  async update(id,status,notes){if(!SHEETS_API_URL)return{};try{await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({action:'updateStatus',id,status,notes})});}catch{}},
+/* ── SVG: APP ICON ─────────────────────────────────────────── */
+function AppIcon({size=32}){
+  return e('svg',{width:size,height:size,viewBox:'0 0 120 120',fill:'none'},
+    e('defs',null,
+      e('radialGradient',{id:'iconBg',cx:'40%',cy:'30%',r:'90%'},
+        e('stop',{offset:'0%',stopColor:'#8A1228'}),
+        e('stop',{offset:'100%',stopColor:'#3A0412'})
+      ),
+      e('linearGradient',{id:'iconBolt',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},
+        e('stop',{offset:'0%',stopColor:'#FFF176'}),
+        e('stop',{offset:'50%',stopColor:'#FFD700'}),
+        e('stop',{offset:'100%',stopColor:'#E8970A'})
+      )
+    ),
+    e('rect',{width:120,height:120,rx:28,fill:'url(#iconBg)'}),
+    e('path',{d:'M0 0H120V38Q60 52 0 38Z',fill:'rgba(255,255,255,.16)'}),
+    e('ellipse',{cx:60,cy:62,rx:28,ry:34,fill:'#FFD700',opacity:.12}),
+    e('path',{d:'M73 10L42 58H62L47 110L86 54H66Z',fill:'url(#iconBolt)'}),
+    e('path',{d:'M66 20L50 52H64L52 92',stroke:'rgba(255,255,255,.45)',strokeWidth:2.5,strokeLinecap:'round',fill:'none'})
+  );
+}
+
+/* ── SVG: APAGONCITO MASCOT ────────────────────────────────── */
+function Apagoncito({size=180}){
+  return e('svg',{width:size,height:size*(280/220),viewBox:'0 0 220 280',fill:'none'},
+    e('defs',null,
+      e('radialGradient',{id:'aura',cx:'50%',cy:'50%',r:'50%'},
+        e('stop',{offset:'0%',stopColor:'#FFD700',stopOpacity:.4}),
+        e('stop',{offset:'100%',stopColor:'#FFD700',stopOpacity:0})
+      ),
+      e('radialGradient',{id:'bul',cx:'45%',cy:'40%',r:'60%'},
+        e('stop',{offset:'0%',stopColor:'#FFE89C'}),
+        e('stop',{offset:'45%',stopColor:'#F5A623'}),
+        e('stop',{offset:'100%',stopColor:'#C07B10'})
+      ),
+      e('linearGradient',{id:'bG',x1:'0%',y1:'0%',x2:'0%',y2:'100%'},
+        e('stop',{offset:'0%',stopColor:'#888'}),
+        e('stop',{offset:'100%',stopColor:'#555'})
+      ),
+      e('linearGradient',{id:'lG',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},
+        e('stop',{offset:'0%',stopColor:'#FFF176'}),
+        e('stop',{offset:'100%',stopColor:'#E8970A'})
+      )
+    ),
+    e('ellipse',{cx:110,cy:270,rx:52,ry:8,fill:'rgba(0,0,0,.35)'}),
+    e('ellipse',{cx:110,cy:138,rx:88,ry:80,fill:'url(#aura)',opacity:.45}),
+    /* arms */
+    e('path',{d:'M68 162 Q46 154 30 142 Q22 137 25 128 Q28 119 36 123 Q52 132 66 148',fill:'#F5A623',stroke:'#2C1A00',strokeWidth:3.5,strokeLinejoin:'round'}),
+    e('circle',{cx:28,cy:128,r:11,fill:'#F5A623',stroke:'#2C1A00',strokeWidth:3.5}),
+    e('path',{d:'M152 162 Q174 154 190 142 Q198 137 195 128 Q192 119 184 123 Q168 132 154 148',fill:'#F5A623',stroke:'#2C1A00',strokeWidth:3.5,strokeLinejoin:'round'}),
+    e('circle',{cx:192,cy:128,r:11,fill:'#F5A623',stroke:'#2C1A00',strokeWidth:3.5}),
+    /* body */
+    e('path',{d:'M64 158 Q60 112 77 84 Q91 58 110 54 Q129 58 143 84 Q160 112 156 158 Q151 173 148 180 L72 180 Q69 173 64 158Z',fill:'url(#bul)',stroke:'#2C1A00',strokeWidth:4,strokeLinejoin:'round'}),
+    e('ellipse',{cx:90,cy:97,rx:16,ry:24,fill:'rgba(255,255,255,.32)',transform:'rotate(-18 90 97)'}),
+    /* brows */
+    e('path',{d:'M74 108 Q89 98 106 104',stroke:'#2C1A00',strokeWidth:6,strokeLinecap:'round',fill:'none'}),
+    e('path',{d:'M114 104 Q131 98 146 108',stroke:'#2C1A00',strokeWidth:6,strokeLinecap:'round',fill:'none'}),
+    /* eyes */
+    e('ellipse',{cx:90,cy:133,rx:21,ry:23,fill:'white',stroke:'#2C1A00',strokeWidth:3.5,className:'eye-b'}),
+    e('circle',{cx:92,cy:135,r:14,fill:'#6B3A00'}),
+    e('circle',{cx:93,cy:136,r:9,fill:'#0A0A0A'}),
+    e('circle',{cx:99,cy:128,r:5,fill:'white'}),
+    e('ellipse',{cx:130,cy:133,rx:21,ry:23,fill:'white',stroke:'#2C1A00',strokeWidth:3.5,className:'eye-b'}),
+    e('circle',{cx:132,cy:135,r:14,fill:'#6B3A00'}),
+    e('circle',{cx:133,cy:136,r:9,fill:'#0A0A0A'}),
+    e('circle',{cx:139,cy:128,r:5,fill:'white'}),
+    /* cheeks */
+    e('ellipse',{cx:68,cy:152,rx:15,ry:10,fill:'rgba(240,80,50,.28)'}),
+    e('ellipse',{cx:152,cy:152,rx:15,ry:10,fill:'rgba(240,80,50,.28)'}),
+    /* mouth */
+    e('path',{d:'M84 161 Q110 182 136 161',fill:'#2C1A00',stroke:'#2C1A00',strokeWidth:3.5,strokeLinecap:'round'}),
+    e('path',{d:'M87 163 Q110 180 133 163 Q120 174 110 174 Q100 174 87 163Z',fill:'white'}),
+    /* base */
+    e('rect',{x:83,y:178,width:54,height:10,rx:5,fill:'#DAA520',stroke:'#2C1A00',strokeWidth:3}),
+    e('rect',{x:77,y:188,width:66,height:13,rx:4,fill:'#C49A2A',stroke:'#2C1A00',strokeWidth:3}),
+    e('rect',{x:80,y:201,width:60,height:12,rx:4,fill:'#A07D22',stroke:'#2C1A00',strokeWidth:3}),
+    e('circle',{cx:110,cy:218,r:9,fill:'url(#bG)',stroke:'#2C1A00',strokeWidth:3}),
+    /* crown bolt */
+    e('path',{d:'M120 6 L104 34 H116 L100 62 L128 30 H116 Z',fill:'url(#lG)',stroke:'#2C1A00',strokeWidth:3.5,strokeLinejoin:'round'})
+  );
+}
+
+/* ── SVG: ICONS ────────────────────────────────────────────── */
+const Ic = {
+  bolt:(s=18,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 52 52',fill:'none'},e('path',{d:'M30 6L14 28H26L22 46L38 24H26L30 6Z',fill:c})),
+  drop:(s=18,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M12 2C12 2 5 9.5 5 14.5C5 18.09 8.13 21 12 21C15.87 21 19 18.09 19 14.5C19 9.5 12 2 12 2Z',fill:c})),
+  search:(s=14,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('circle',{cx:11,cy:11,r:8,stroke:c,strokeWidth:1.7}),e('path',{d:'M21 21l-4.35-4.35',stroke:c,strokeWidth:1.7,strokeLinecap:'round'})),
+  send:(s=14,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13',stroke:c,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'})),
+  plus:(s=20,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M12 5v14M5 12h14',stroke:c,strokeWidth:2.4,strokeLinecap:'round'})),
+  x:(s=14,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M18 6L6 18M6 6l12 12',stroke:c,strokeWidth:1.8,strokeLinecap:'round'})),
+  arrow:(s=14,c='currentColor',d='right')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',style:{transform:d==='left'?'rotate(180deg)':''}},e('path',{d:'M5 12h14M13 5l7 7-7 7',stroke:c,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'})),
+  pin:(s=18,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M12 22s8-7.58 8-12a8 8 0 1 0-16 0c0 4.42 8 12 8 12z',stroke:c,strokeWidth:1.7}),e('circle',{cx:12,cy:10,r:2.7,stroke:c,strokeWidth:1.7})),
+  bell:(s=16,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9',stroke:c,strokeWidth:1.7,strokeLinejoin:'round'}),e('path',{d:'M13.73 21a2 2 0 0 1-3.46 0',stroke:c,strokeWidth:1.7,strokeLinecap:'round'})),
+  home:(s=16,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',stroke:c,strokeWidth:1.7,strokeLinejoin:'round'}),e('path',{d:'M9 22V12h6v10',stroke:c,strokeWidth:1.7,strokeLinejoin:'round'})),
+  map:(s=16,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M9 4l-6 2v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',stroke:c,strokeWidth:1.7,strokeLinejoin:'round'})),
+  chat:(s=16,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',stroke:c,strokeWidth:1.7,strokeLinejoin:'round'})),
+  menu:(s=16,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M3 6h18M3 12h18M3 18h18',stroke:c,strokeWidth:2,strokeLinecap:'round'})),
+  cam:(s=16,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z',stroke:c,strokeWidth:1.7,strokeLinejoin:'round'}),e('circle',{cx:12,cy:13,r:4,stroke:c,strokeWidth:1.7})),
+  check:(s=14,c='currentColor')=>e('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none'},e('path',{d:'M20 6L9 17l-5-5',stroke:c,strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'})),
 };
 
-// ── LAYOUT ────────────────────────────────────────────
-const r=(x={})=>({display:'flex',alignItems:'center',...x});
-const co=(x={})=>({display:'flex',flexDirection:'column',...x});
-const e=React.createElement;
-
-// ── SHARED UI ─────────────────────────────────────────
-function Av({init,size=36,color=C.blue,glow}){
-  return e('div',{style:{width:size,height:size,borderRadius:'50%',flexShrink:0,
-    background:`linear-gradient(135deg,${color}ee,${color}66)`,
-    display:'flex',alignItems:'center',justifyContent:'center',
-    fontSize:size*.32,fontWeight:800,color:'#fff',
-    boxShadow:glow?`0 0 18px ${color}55`:undefined}},init);
-}
-function SBadge({s}){
-  const st=STS[s]||STS.pending;
-  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:999,fontSize:11,fontWeight:700,background:st.bg,color:st.color,border:`1px solid ${st.color}44`}},st.icon(10),' ',st.label);
-}
-function TBadge({t}){
-  const tp=TPS[t]||TPS.post;
-  return e('span',{style:{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 8px',borderRadius:999,fontSize:10,fontWeight:700,background:`${tp.color}15`,color:tp.color,border:`1px solid ${tp.color}30`}},tp.icon(9),' ',tp.label);
-}
-function Pill({label,color}){return e('span',{style:{padding:'3px 9px',borderRadius:999,fontSize:10,fontWeight:600,background:`${color}15`,color,border:`1px solid ${color}25`}},label);}
-function Btn({children,onClick,v='def',sm,full,dis,sx={}}){
-  const p=sm?'7px 14px':'11px 22px',fs=sm?11:13;
-  const vs={pri:{background:`linear-gradient(135deg,${C.blue},${C.blueB})`,color:'#fff',boxShadow:`0 6px 20px ${C.blue}40`},suc:{background:`linear-gradient(135deg,${C.eGrn},${C.green})`,color:'#fff'},dan:{background:`linear-gradient(135deg,${C.red},#ff8096)`,color:'#fff'},war:{background:`linear-gradient(135deg,${C.gold},#ffe07d)`,color:'#1a1000'},def:{background:C.bg3,color:C.ink,border:`1px solid ${C.lineM}`}};
-  return e('button',{className:'btn-ani',onClick,disabled:dis,style:{display:'inline-flex',alignItems:'center',gap:7,cursor:dis?'not-allowed':'pointer',border:'none',borderRadius:12,fontWeight:700,fontSize:fs,padding:p,opacity:dis?.6:1,width:full?'100%':undefined,justifyContent:full?'center':undefined,...(vs[v]||vs.def),...sx}},children);
-}
-function Card({children,sx={},onClick,hover}){
-  return e('div',{onClick,className:hover?'card-hover':undefined,style:{background:C.card,border:`1px solid ${C.line}`,borderRadius:20,boxShadow:'0 4px 20px rgba(0,0,0,.3)',...sx}},children);
-}
-function Stat({label,value,color,IcoFn}){
-  return e(Card,{sx:{padding:'20px',flex:1,minWidth:0,position:'relative',overflow:'hidden'}},
-    e('div',{style:{position:'absolute',top:-20,right:-20,width:70,height:70,borderRadius:'50%',background:`${color}08`}}),
-    e('div',{style:r({justifyContent:'space-between',marginBottom:12})},
-      e('span',{style:{fontSize:10,color:C.dim,fontWeight:700,textTransform:'uppercase',letterSpacing:1.2}},label),
-      e('div',{style:{width:32,height:32,borderRadius:10,background:`${color}18`,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${color}25`}},IcoFn(15))),
-    e('div',{style:{fontSize:28,fontWeight:900,color,letterSpacing:-1.5}},value));
-}
-function Toast({msg,type,onClose}){
-  const col={success:C.green,error:C.red,info:C.cyan,warning:C.gold}[type]||C.cyan;
-  return e('div',{style:{position:'fixed',top:20,right:20,zIndex:9999,animation:'fadeUp .2s ease',
-    background:`${C.card}f2`,backdropFilter:'blur(20px)',border:`1px solid ${col}45`,borderRadius:16,
-    padding:'13px 18px',boxShadow:`0 10px 40px rgba(0,0,0,.7)`,display:'flex',alignItems:'center',gap:12,minWidth:280}},
-    e('div',{style:{width:8,height:8,borderRadius:'50%',background:col,boxShadow:`0 0 10px ${col}`,flexShrink:0}}),
-    e('span',{style:{fontSize:13,fontWeight:600,color:C.ink,flex:1}},msg),
-    e('button',{onClick:onClose,style:{background:'none',border:'none',cursor:'pointer',color:C.dim,display:'flex',padding:0}},IC.X(14,C.dim)));
-}
-
-// ── IG PREVIEW ────────────────────────────────────────
-function IGPreview({p}){
-  const [liked,setLiked]=useState(false);
-  const [saved,setSaved]=useState(false);
-  if(!p) return null;
-  const isReel=p.type==='reel'||p.type==='video';
-  const isStory=p.type==='story';
-  return e('div',{style:co({alignItems:'center',gap:10})},
-    e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase',fontWeight:700}},'Preview · ',(p.platform||'Instagram')),
-    e('div',{style:{width:240,background:'#060606',borderRadius:42,padding:5,boxShadow:'0 30px 80px rgba(0,0,0,.9),0 0 0 1px #181818'}},
-      e('div',{style:{height:26,display:'flex',justifyContent:'center',alignItems:'center',paddingTop:3}},
-        e('div',{style:{width:72,height:21,background:'#000',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px'}},
-          e('span',{style:{fontSize:8,color:'#fff',fontFamily:'monospace'}},'9:41'),
-          e('span',{style:{fontSize:7,color:'#fff'}},'●●●'))),
-      e('div',{style:{background:'#fafafa',borderRadius:32,overflow:'hidden'}},
-        e('div',{style:{padding:'7px 10px',borderBottom:'0.5px solid #efefef',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff'}},
-          e('div',{style:r({gap:7})},
-            e('div',{style:{width:26,height:26,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',padding:2,display:'flex',alignItems:'center',justifyContent:'center'}},
-              e('div',{style:{background:'#fff',borderRadius:'50%',padding:1.5,width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center'}},
-                e('span',{style:{fontSize:9,fontWeight:900,color:'#1a1a1a'}},'G'))),
-            e('div',null,
-              e('div',{style:{fontSize:9.5,fontWeight:800,color:'#000',fontFamily:'sans-serif',lineHeight:1}},'gtahub.mx'),
-              e('div',{style:{fontSize:7.5,color:'#888',fontFamily:'sans-serif'}},'Patrocinado'))),
-          e('div',{style:r({gap:6})},e('span',{style:{fontSize:9,fontWeight:700,color:'#1877f2'}},'Seguir'),IC.MoreH(13,'#000'))),
-        e('div',{style:{position:'relative',width:'100%',paddingBottom:isStory?'177%':'125%',overflow:'hidden',background:'#e0e0e0'}},
-          e('img',{src:p.img,alt:'',style:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}),
-          isReel&&e('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.2)'}},
-            e('div',{style:{width:42,height:42,background:'rgba(255,255,255,.92)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}},
-              IC.Play(16,'#000','#000'))),
-          e('div',{style:{position:'absolute',top:7,right:7,background:'rgba(0,0,0,.7)',borderRadius:5,padding:'2px 6px',fontSize:7,color:'#fff',fontWeight:900,letterSpacing:1.5}},'GTAHUB')),
-        e('div',{style:{padding:'8px 10px 6px',background:'#fff'}},
-          e('div',{style:r({justifyContent:'space-between',marginBottom:5})},
-            e('div',{style:r({gap:12})},
-              e('button',{onClick:()=>setLiked(!liked),style:{background:'none',border:'none',cursor:'pointer',padding:0}},
-                React.createElement(IconMulti,{size:18,color:liked?'#ed4956':'#262626',strokeWidth:1.5,paths:['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']})),
-              IC.MessageCircle(18,'#262626'),
-              IC.Send(18,'#262626')),
-            e('button',{onClick:()=>setSaved(!saved),style:{background:'none',border:'none',cursor:'pointer',padding:0}},
-              IC.Bookmark(18,'#262626'))),
-          e('div',{style:{fontSize:9.5,fontWeight:800,color:'#000',fontFamily:'sans-serif',marginBottom:2}},(1247+(liked?1:0)).toLocaleString(),' Me gusta'),
-          e('div',{style:{fontSize:9,color:'#262626',fontFamily:'sans-serif',lineHeight:1.5}},e('span',{style:{fontWeight:800}},'gtahub.mx'),' ',p.caption.split('\n')[0].substring(0,46)),
-          p.hashtags?.length>0&&e('div',{style:{fontSize:8,color:'#00376b',marginTop:1,fontFamily:'sans-serif'}},p.hashtags.slice(0,3).join(' ')),
-          e('div',{style:{fontSize:7.5,color:'#a8a8a8',margin:'2px 0 5px',fontFamily:'sans-serif',textTransform:'uppercase',letterSpacing:.5}},p.date)))),
-    e('div',{style:co({gap:6,width:'100%',maxWidth:240})},
-      p.cta&&e('div',{style:{background:`${C.cyan}10`,border:`1px solid ${C.cyan}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'CTA'),e('div',{style:{fontSize:11,fontWeight:700,color:C.cyan,marginTop:1}},p.cta)),
-      p.reach&&e('div',{style:{background:`${C.eGrn}10`,border:`1px solid ${C.eGrn}25`,borderRadius:10,padding:'7px 12px',textAlign:'center'}},e('div',{style:{fontSize:8,color:C.dim,textTransform:'uppercase',letterSpacing:1}},'Alcance est.'),e('div',{style:{fontSize:13,fontWeight:800,color:C.eGrn,marginTop:1}},p.reach))));
-}
-
-// ── SIDEBAR ───────────────────────────────────────────
-const NAV=[
-  {id:'dashboard',label:'Dashboard',    fn:(s,c)=>IC.Dashboard(s,c)},
-  {id:'parrilla', label:'Parrilla',      fn:(s,c)=>IC.Calendar(s,c)},
-  {id:'proposals',label:'Propuestas',   fn:(s,c)=>IC.FileText(s,c)},
-  {id:'targets',  label:'Targets',      fn:(s,c)=>IC.Target(s,c)},
-  {id:'ads',      label:'Ads & Campañas',fn:(s,c)=>IC.Megaphone(s,c)},
-];
-function Sidebar({view,setView,user,setUser,props}){
-  const pending=(props||[]).filter(p=>p.status==='pending').length;
-  const rol=ROLE[user.role]||ROLE.mkt;
-  return e('nav',{style:{width:224,background:`linear-gradient(180deg,${C.bg2},${C.bg})`,borderRight:`1px solid ${C.line}`,display:'flex',flexDirection:'column',flexShrink:0,height:'100vh',overflowY:'auto'}},
-    e('div',{style:{padding:'22px 18px 18px',borderBottom:`1px solid ${C.line}`}},
-      e('div',{style:r({gap:12})},
-        e('div',{className:'logo-pulse',style:{width:40,height:40,borderRadius:13,background:`linear-gradient(135deg,${C.blue},${C.cyan})`,display:'flex',alignItems:'center',justifyContent:'center'}},
-          e('span',{style:{fontSize:18,fontWeight:900,color:'#fff',letterSpacing:-1}},'G')),
-        e('div',null,
-          e('div',{style:{fontSize:15,fontWeight:900,color:C.ink,letterSpacing:-.5}},'GTAHUB'),
-          e('div',{style:{fontSize:9,color:C.dim,letterSpacing:2,textTransform:'uppercase'}},'by Eleevate MX')))),
-    e('div',{style:{padding:'12px 14px',borderBottom:`1px solid ${C.line}`}},
-      e('div',{style:{display:'flex',alignItems:'center',gap:7,padding:'7px 11px',borderRadius:10,background:`${rol.color}18`,border:`1px solid ${rol.color}30`}},
-        rol.Icon(11),e('span',{style:{fontSize:10,fontWeight:700,color:rol.color,textTransform:'uppercase',letterSpacing:.8}},rol.label))),
-    e('div',{style:{flex:1,padding:'12px 10px',display:'flex',flexDirection:'column',gap:2}},
-      NAV.map(n=>{
-        const active=view===n.id;
-        const badge=n.id==='proposals'&&pending>0&&user.role==='admin';
-        return e('button',{key:n.id,className:'nav-btn',onClick:()=>setView(n.id),style:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',background:active?`${C.blue}22`:'transparent',border:active?`1px solid ${C.blue}35`:'1px solid transparent',color:active?C.blueB:C.dim,fontWeight:active?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
-          n.fn(15,active?C.blueB:C.dim),
-          e('span',{style:{flex:1}},n.label),
-          badge&&e('span',{style:{background:C.red,color:'#fff',borderRadius:999,fontSize:9,fontWeight:900,padding:'2px 7px',boxShadow:`0 0 8px ${C.red}55`}},pending));
-      }),
-      user.role==='mkt'&&e('button',{className:'nav-btn',onClick:()=>setView('new-proposal'),style:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 13px',borderRadius:12,cursor:'pointer',background:view==='new-proposal'?`${C.purple}22`:'transparent',border:view==='new-proposal'?`1px solid ${C.purple}35`:'1px solid transparent',color:view==='new-proposal'?C.purple:C.dim,fontWeight:view==='new-proposal'?700:500,fontSize:13,textAlign:'left',transition:'all .15s'}},
-        IC.Plus(15,view==='new-proposal'?C.purple:C.dim),e('span',null,'Nueva Propuesta'))),
-    e('div',{style:{padding:'14px',borderTop:`1px solid ${C.line}`}},
-      e('div',{style:{padding:'10px 12px',borderRadius:14,background:C.bg3,border:`1px solid ${C.line}`,marginBottom:8}},
-        e('div',{style:r({gap:10,marginBottom:8})},
-          e(Av,{init:user.av,color:user.color,size:36}),
-          e('div',{style:{flex:1,minWidth:0}},
-            e('div',{style:{fontSize:12,fontWeight:800,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},user.emoji,' ',user.name),
-            e('div',{style:{fontSize:10,color:C.dim,marginTop:1}},user.tag))),
-        e('button',{onClick:()=>setUser(null),style:{display:'flex',alignItems:'center',gap:6,width:'100%',padding:'6px 8px',borderRadius:8,background:'transparent',border:`1px solid ${C.lineM}`,cursor:'pointer',color:C.dim,fontSize:11,fontWeight:600,justifyContent:'center',transition:'all .15s'}},
-          IC.LogOut(11,C.dim),' Cerrar sesión'))));
-}
-
-// ── LOGIN ─────────────────────────────────────────────
-function Login({onLogin}){
-  const [sel,setSel]=useState(null);
-  const admins=USERS.filter(u=>u.role==='admin');
-  const mkts=USERS.filter(u=>u.role==='mkt');
-  const UBtn=(u)=>e('button',{key:u.id,onClick:()=>setSel(u),className:'btn-ani',style:{display:'flex',alignItems:'center',gap:13,padding:'13px 15px',background:sel?.id===u.id?`${u.color}18`:C.bg3,border:sel?.id===u.id?`1px solid ${u.color}55`:`1px solid ${C.line}`,borderRadius:14,cursor:'pointer',width:'100%',boxShadow:sel?.id===u.id?`0 8px 24px ${u.color}22`:'none',transition:'all .2s'}},
-    e(Av,{init:u.av,color:u.color,size:40,glow:sel?.id===u.id}),
-    e('div',{style:{textAlign:'left',flex:1}},e('div',{style:{fontSize:14,fontWeight:800,color:C.ink}},u.emoji,' ',u.name),e('div',{style:{fontSize:10,color:C.dim,marginTop:2}},u.tag)),
-    sel?.id===u.id&&IC.CheckCircle(17,u.color));
-  return e('div',{style:{minHeight:'100vh',background:`radial-gradient(ellipse at 15% 20%,${C.blue}18 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,${C.purple}12 0%,transparent 50%),${C.bg}`,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}},
-    e('div',{style:{width:'100%',maxWidth:440}},
-      e('div',{style:{textAlign:'center',marginBottom:36}},
-        e('div',{style:{display:'flex',justifyContent:'center',marginBottom:18}},
-          e('div',{className:'logo-pulse',style:{width:72,height:72,borderRadius:22,background:`linear-gradient(135deg,${C.blue},${C.cyan})`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 20px 60px ${C.blue}45,0 0 0 1px ${C.blueB}25`}},
-            e('span',{style:{fontSize:32,fontWeight:900,color:'#fff',letterSpacing:-2}},'G'))),
-        e('div',{style:{fontSize:32,fontWeight:900,color:C.ink,letterSpacing:-1.5}},'GTAHUB'),
-        e('div',{style:{fontSize:11,color:C.dim,letterSpacing:3,textTransform:'uppercase',marginTop:5}},'Content Hub · Eleevate MX')),
-      !SHEETS_API_URL&&e('div',{style:{background:`${C.gold}12`,border:`1px solid ${C.gold}30`,borderRadius:12,padding:'9px 16px',marginBottom:20,textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:8}},IC.Zap(12,C.gold),e('span',{style:{fontSize:11,color:C.gold,fontWeight:600}},'Modo demo — conecta Google Sheets para datos reales')),
-      e('div',{style:{marginBottom:16}},
-        e('div',{style:r({gap:8,marginBottom:10})},e('div',{style:{width:3,height:16,borderRadius:2,background:C.gold}}),e('span',{style:{fontSize:10,fontWeight:700,color:C.gold,textTransform:'uppercase',letterSpacing:1.5}},'Admin / Staff')),
-        e('div',{style:co({gap:7})},admins.map(UBtn))),
-      e('div',{style:{display:'flex',alignItems:'center',gap:12,margin:'16px 0'}},e('div',{style:{flex:1,height:'1px',background:C.line}}),e('span',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:2}},'MKT'),e('div',{style:{flex:1,height:'1px',background:C.line}})),
-      e('div',{style:{marginBottom:22}},
-        e('div',{style:r({gap:8,marginBottom:10})},e('div',{style:{width:3,height:16,borderRadius:2,background:C.purple}}),e('span',{style:{fontSize:10,fontWeight:700,color:C.purple,textTransform:'uppercase',letterSpacing:1.5}},'Usuario de MKT')),
-        e('div',{style:co({gap:7})},mkts.map(UBtn))),
-      e('button',{onClick:()=>sel&&onLogin(sel),className:'btn-ani',style:{width:'100%',padding:'15px',borderRadius:16,border:'none',cursor:sel?'pointer':'not-allowed',fontWeight:800,fontSize:15,letterSpacing:.3,background:sel?`linear-gradient(135deg,${sel.color},${sel.color}bb)`:C.bg3,color:sel?'#fff':C.mute,boxShadow:sel?`0 16px 40px ${sel.color}40`:'none',transition:'all .3s'}},sel?`Entrar como ${sel.name} ${sel.emoji} →`:'Selecciona un perfil'),
-      e('div',{style:{textAlign:'center',marginTop:20,fontSize:11,color:C.mute}},'GTAHUB Content Hub · Eleevate MX © 2026')));
-}
-
-// ── DASHBOARD ─────────────────────────────────────────
-function Dashboard({props,setView,setSel,user}){
-  const cnt={total:props.length,pending:props.filter(p=>p.status==='pending').length,approved:props.filter(p=>p.status==='approved').length,review:props.filter(p=>p.status==='review').length};
-  const mine=user.role==='mkt'?props.filter(p=>p.author===user.name):props;
-  return e('div',{className:'page',style:{padding:'28px 32px',maxWidth:1080}},
-    e('div',{style:r({justifyContent:'space-between',marginBottom:28})},
-      e('div',null,e('h1',{style:{fontSize:24,fontWeight:900,color:C.ink,margin:'0 0 5px',letterSpacing:-.8}},'Hola, ',user.emoji,' ',user.name.split(' ')[0],' 👋'),e('div',{style:{fontSize:13,color:C.dim}},'Mayo 2026 · ',e('span',{style:{color:C.cyan,fontWeight:600}},'Parrilla activa'))),
-      user.role==='admin'&&cnt.pending>0&&e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:14,background:`${C.red}15`,border:`1px solid ${C.red}35`,cursor:'pointer',color:C.red,fontSize:12,fontWeight:700,animation:'pulse 2s ease infinite'}},IC.Alert(14,C.red),' ',cnt.pending,' pendiente',cnt.pending>1?'s':'',' de revisión')),
-    e('div',{style:r({gap:14,marginBottom:28,flexWrap:'wrap'})},
-      e(Stat,{label:'Total',       value:cnt.total,    color:C.blueB, IcoFn:(s)=>IC.FileText(s,C.blueB)}),
-      e(Stat,{label:'Pendientes',  value:cnt.pending,  color:C.cyan,  IcoFn:(s)=>IC.Clock(s,C.cyan)}),
-      e(Stat,{label:'Aprobadas',   value:cnt.approved, color:C.green, IcoFn:(s)=>IC.CheckCircle(s,C.green)}),
-      e(Stat,{label:'En revisión', value:cnt.review,   color:C.gold,  IcoFn:(s)=>IC.Eye(s,C.gold)})),
-    e('div',null,
-      e('div',{style:r({justifyContent:'space-between',marginBottom:14})},
-        e('span',{style:{fontSize:14,fontWeight:800,color:C.ink}},user.role==='mkt'?'Mis Propuestas':'Actividad Reciente'),
-        e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:4,fontSize:12,color:C.cyan,background:'none',border:'none',cursor:'pointer',fontWeight:700}},'Ver todas ',IC.ChevronR(13,C.cyan))),
-      e('div',{style:co({gap:9})},
-        mine.length===0&&e('div',{style:{textAlign:'center',padding:40,color:C.mute,fontSize:13}},'Sin propuestas aún.'),
-        mine.slice(0,5).map(p=>e(Card,{key:p.id,hover:true,sx:{padding:'14px 18px'},onClick:()=>{setSel(p);setView('detail');}},
-          e('div',{style:r({gap:14})},
-            e('div',{style:{position:'relative',flexShrink:0}},
-              e('img',{src:p.img,style:{width:50,height:50,borderRadius:12,objectFit:'cover',display:'block'},alt:''}),
-              e('div',{style:{position:'absolute',bottom:-3,right:-3,width:19,height:19,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},(TPS[p.type]||TPS.post).icon(8))),
-            e('div',{style:{flex:1,minWidth:0}},
-              e('div',{style:r({gap:7,marginBottom:4,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{t:p.type})),
-              e('div',{style:{fontSize:11,color:C.dim}},p.week,' · ',p.day,' · ',p.author)),
-            e(SBadge,{s:p.status}))))),
-    user.role==='mkt'&&e('div',{style:r({gap:10,marginTop:20})},e(Btn,{v:'pri',onClick:()=>setView('new-proposal')},IC.Plus(14),' Nueva propuesta'),e(Btn,{onClick:()=>setView('parrilla')},IC.Calendar(14),' Ver parrilla'))));
-}
-
-// ── PROPOSALS ─────────────────────────────────────────
-function Proposals({props,setProps,setView,setSel,user,toast}){
-  const [flt,setFlt]=useState('all');
-  const [wk,setWk]=useState('all');
-  const TABS=['all','pending','approved','review','rejected'];
-  const LBL={all:'Todas',pending:'Pendientes',approved:'Aprobadas',review:'En Revisión',rejected:'Rechazadas'};
-  const filtered=props.filter(p=>(flt==='all'||p.status===flt)&&(wk==='all'||p.week===wk)&&(user.role==='admin'||p.author===user.name));
-  const act=async(id,s)=>{await api.update(id,s);setProps(ps=>ps.map(p=>p.id===id?{...p,status:s}:p));toast(`Propuesta ${({approved:'aprobada ✓',rejected:'rechazada ✗',review:'a revisión'})[s]}`,s==='approved'?'success':s==='rejected'?'error':'info');};
-  return e('div',{className:'page',style:{padding:'28px 32px',maxWidth:1000}},
-    e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
-      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Propuestas'),e('div',{style:{fontSize:13,color:C.dim}},filtered.length,' resultado',filtered.length!==1?'s':'')),
-      user.role==='mkt'&&e(Btn,{v:'pri',sm:true,onClick:()=>setView('new-proposal')},IC.Plus(13),' Nueva')),
-    e('div',{style:r({gap:10,marginBottom:18,flexWrap:'wrap'})},
-      e('div',{style:{background:C.bg2,borderRadius:14,padding:5,border:`1px solid ${C.line}`,display:'flex',gap:3}},
-        TABS.map(t=>e('button',{key:t,onClick:()=>setFlt(t),style:{padding:'6px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:flt===t?C.bg4:'transparent',border:flt===t?`1px solid ${C.lineM}`:'1px solid transparent',color:flt===t?C.ink:C.dim,whiteSpace:'nowrap'}},LBL[t]))),
-      e('select',{value:wk,onChange:ev=>setWk(ev.target.value),style:{padding:'9px 14px',borderRadius:12,fontSize:11,fontWeight:700,background:C.bg2,border:`1px solid ${C.lineM}`,color:C.dim,cursor:'pointer'}},
-        e('option',{value:'all'},'Todas las semanas'),WEEKS.map(w=>e('option',{key:w,value:w},w)))),
-    e('div',{style:co({gap:10})},
-      filtered.length===0&&e('div',{style:{textAlign:'center',padding:50,color:C.mute,fontSize:14}},'Sin propuestas con este filtro'),
-      filtered.map(p=>{
-        const tp=TPS[p.type];
-        return e(Card,{key:p.id,sx:{padding:'15px 18px'}},
-          e('div',{style:r({gap:14})},
-            e('div',{style:{position:'relative',flexShrink:0}},
-              e('img',{src:p.img,style:{width:62,height:62,borderRadius:14,objectFit:'cover',display:'block'},alt:''}),
-              tp&&e('div',{style:{position:'absolute',bottom:-4,right:-4,width:22,height:22,borderRadius:'50%',background:C.bg2,border:`2px solid ${C.card}`,display:'flex',alignItems:'center',justifyContent:'center'}},tp.icon(10))),
-            e('div',{style:{flex:1,minWidth:0}},
-              e('div',{style:r({gap:8,marginBottom:5,flexWrap:'wrap'})},e('span',{style:{fontSize:13,fontWeight:700,color:C.ink}},p.title),e(TBadge,{t:p.type})),
-              e('div',{style:{fontSize:11,color:C.dim}},p.week,' · ',p.day,' ',p.time,' · ',p.author)),
-            e('div',{style:co({gap:8,alignItems:'flex-end',flexShrink:0})},
-              e(SBadge,{s:p.status}),
-              e('div',{style:r({gap:6})},
-                user.role==='admin'&&p.status==='pending'&&e(React.Fragment,null,
-                  e('button',{title:'Aprobar',onClick:()=>act(p.id,'approved'),style:{background:`${C.green}15`,border:`1px solid ${C.green}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.green,display:'flex'}},IC.CheckCircle(13,C.green)),
-                  e('button',{title:'Revisar',onClick:()=>act(p.id,'review'),style:{background:`${C.gold}15`,border:`1px solid ${C.gold}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.gold,display:'flex'}},IC.Eye(13,C.gold)),
-                  e('button',{title:'Rechazar',onClick:()=>act(p.id,'rejected'),style:{background:`${C.red}15`,border:`1px solid ${C.red}35`,borderRadius:9,padding:'6px 9px',cursor:'pointer',color:C.red,display:'flex'}},IC.XCircle(13,C.red))),
-                e('button',{onClick:()=>{setSel(p);setView('detail');},style:{background:`${C.blue}15`,border:`1px solid ${C.blue}35`,borderRadius:9,padding:'6px 12px',cursor:'pointer',color:C.blueB,fontSize:11,fontWeight:700,display:'flex',alignItems:'center',gap:5}},IC.Eye(12,C.blueB),' Ver')))));
-      })));
-}
-
-// ── DETAIL ────────────────────────────────────────────
-function Detail({initP,props,setProps,setView,user,toast}){
-  const [note,setNote]=useState(initP.notes||'');
-  const [confirmR,setConfirmR]=useState(false);
-  const p=props.find(x=>x.id===initP.id)||initP;
-  const doAct=async(s)=>{await api.update(p.id,s,note);setProps(ps=>ps.map(x=>x.id===p.id?{...x,status:s,notes:note}:x));toast({approved:'✅ Aprobada',review:'👁 A revisión',rejected:'❌ Rechazada'}[s],s==='approved'?'success':s==='rejected'?'error':'info');setConfirmR(false);};
-  const inp={width:'100%',background:C.bg3,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:12};
-  return e('div',{className:'page',style:{padding:'22px 28px',maxWidth:1100}},
-    e('button',{onClick:()=>setView('proposals'),style:{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',color:C.dim,fontSize:12,fontWeight:600,marginBottom:20,padding:0}},IC.ArrowLeft(14,C.dim),' Volver'),
-    e('div',{style:r({gap:28,alignItems:'flex-start'})},
-      e('div',{style:{flexShrink:0}},e(IGPreview,{p})),
-      e('div',{style:{flex:1,minWidth:0}},
-        e('div',{style:r({gap:10,marginBottom:20,flexWrap:'wrap'})},e('h2',{style:{fontSize:20,fontWeight:900,color:C.ink,flex:1,margin:0}},p.title),e(SBadge,{s:p.status}),e(TBadge,{t:p.type})),
-        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}},
-          [['Autor',p.author],['Plataforma',p.platform],['Semana',p.week],['Publicación',`${p.day} · ${p.time}`],['Target',p.target||'—'],['Alcance est.',p.reach||'—'],...(p.budget?[['Presupuesto',`$${p.budget} MXN`]]:[])].map(([k,v])=>
-            e('div',{key:k,style:{background:C.bg3,borderRadius:12,padding:'11px 14px',border:`1px solid ${C.line}`}},
-              e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.8,marginBottom:4}},k),
-              e('div',{style:{fontSize:13,fontWeight:700,color:C.ink}},v)))),
-        e(Card,{sx:{padding:'14px 16px',marginBottom:12}},e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},'Caption'),e('pre',{style:{fontSize:12,color:C.ink,fontFamily:'Poppins,sans-serif',whiteSpace:'pre-wrap',lineHeight:1.8,margin:0}},p.caption)),
-        p.hashtags?.length>0&&e('div',{style:r({gap:6,flexWrap:'wrap',marginBottom:14})},p.hashtags.map(h=>e(Pill,{key:h,label:h,color:C.blueB}))),
-        e(Card,{sx:{padding:'14px 16px',marginBottom:18}},e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:8}},user.role==='admin'?'Notas del equipo':'Feedback'),user.role==='admin'?e('textarea',{value:note,onChange:ev=>setNote(ev.target.value),placeholder:'Escribe feedback…',rows:3,style:{...inp,resize:'vertical'}}):e('div',{style:{fontSize:12,color:p.notes?C.dim:C.mute,lineHeight:1.7}},p.notes||'Sin notas aún.')),
-        user.role==='admin'&&e('div',null,e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:1,marginBottom:12}},'Acciones de revisión'),e('div',{style:r({gap:10,flexWrap:'wrap'})},
-          e(Btn,{v:'suc',onClick:()=>doAct('approved')},IC.CheckCircle(14),' Aprobar'),
-          e(Btn,{v:'war',onClick:()=>doAct('review')},IC.Eye(14),' A revisión'),
-          !confirmR?e(Btn,{v:'dan',onClick:()=>setConfirmR(true)},IC.XCircle(14),' Rechazar'):e('div',{style:r({gap:8})},e(Btn,{v:'dan',onClick:()=>doAct('rejected')},IC.XCircle(14),' Confirmar'),e(Btn,{onClick:()=>setConfirmR(false)},'Cancelar')))))));
-}
-
-// ── NEW PROPOSAL ──────────────────────────────────────
-function NewProposal({setProps,setView,user,toast}){
-  const [f,setF]=useState({title:'',type:'reel',week:'Semana 1',day:'Lunes',time:'12:00',img:'',caption:'',hashtags:'',cta:'',target:'',budget:''});
-  const [prev,setPrev]=useState(false);
-  const [sav,setSav]=useState(false);
-  const set=(k,v)=>setF(x=>({...x,[k]:v}));
-  const inp={width:'100%',background:C.bg2,border:`1px solid ${C.lineM}`,borderRadius:12,padding:'10px 14px',color:C.ink,fontSize:13};
-  const lbl={fontSize:10,color:C.dim,fontWeight:700,textTransform:'uppercase',letterSpacing:.8,marginBottom:6,display:'block'};
-  const prevP={...f,hashtags:f.hashtags.split(/[\s,]+/).filter(Boolean),img:f.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop'};
-  const submit=async()=>{
-    if(!f.title||!f.caption){toast('Completa título y caption','error');return;}
-    setSav(true);
-    const np={title:f.title,type:f.type,author:user.name,av:user.av,week:f.week,day:f.day,time:f.time,caption:f.caption,img:f.img||'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=500&fit=crop',hashtags:f.hashtags.split(/[\s,]+/).filter(Boolean),cta:f.cta,target:f.target,platform:'Instagram',date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}),notes:'',reach:'—',budget:f.budget?parseInt(f.budget):null};
-    const r=await api.add(np);
-    setProps(ps=>[...ps,{...np,id:r.id||Date.now(),status:'pending'}]);
-    toast('✅ Propuesta enviada para revisión','success');setSav(false);setView('proposals');
-  };
-  return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:980}},
-    e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
-      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Nueva Propuesta'),e('div',{style:{fontSize:13,color:C.dim}},'Crea una propuesta para la parrilla semanal')),
-      e(Btn,{sm:true,onClick:()=>setPrev(!prev)},prev?e(React.Fragment,null,IC.X(13),' Ocultar'):e(React.Fragment,null,IC.Eye(13),' Vista previa'))),
-    e('div',{style:r({gap:28,alignItems:'flex-start'})},
-      e('div',{style:{flex:1,minWidth:0}},
-        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Título'),e('input',{value:f.title,onChange:ev=>set('title',ev.target.value),placeholder:'Ej: Reel: Top 5 misiones épicas',style:inp})),
-        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:14}},
-          [{k:'type',label:'Tipo',opts:Object.keys(TPS),fn:k=>TPS[k].label},{k:'week',label:'Semana',opts:WEEKS},{k:'day',label:'Día',opts:DAYS}].map(x=>e('div',{key:x.k},e('label',{style:lbl},x.label),e('select',{value:f[x.k],onChange:ev=>set(x.k,ev.target.value),style:{...inp,cursor:'pointer'}},x.opts.map(o=>e('option',{key:o,value:o},x.fn?x.fn(o):o))))),
-          e('div',{key:'t'},e('label',{style:lbl},'Hora'),e('input',{type:'time',value:f.time,onChange:ev=>set('time',ev.target.value),style:inp}))),
-        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'URL de imagen'),e('input',{value:f.img,onChange:ev=>set('img',ev.target.value),placeholder:'https://… (opcional)',style:inp})),
-        e('div',{style:{marginBottom:14}},e('label',{style:lbl},'Caption'),e('textarea',{value:f.caption,onChange:ev=>set('caption',ev.target.value),rows:4,placeholder:'Escribe el copy del post…',style:{...inp,resize:'vertical'}})),
-        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}},
-          e('div',null,e('label',{style:lbl},'Hashtags'),e('input',{value:f.hashtags,onChange:ev=>set('hashtags',ev.target.value),placeholder:'#GTAHUB, #GTA5',style:inp})),
-          e('div',null,e('label',{style:lbl},'Call to Action'),e('input',{value:f.cta,onChange:ev=>set('cta',ev.target.value),placeholder:'Link en bio',style:inp}))),
-        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:22}},
-          e('div',null,e('label',{style:lbl},'Target'),e('input',{value:f.target,onChange:ev=>set('target',ev.target.value),placeholder:'Gamers 18–28, México',style:inp})),
-          e('div',null,e('label',{style:lbl},'Presupuesto MXN'),e('input',{type:'number',value:f.budget,onChange:ev=>set('budget',ev.target.value),placeholder:'0',style:inp}))),
-        e('div',{style:r({gap:10})},e(Btn,{v:'pri',onClick:submit,dis:sav},sav?'Guardando…':e(React.Fragment,null,IC.Zap(14),' Enviar propuesta')),e(Btn,{onClick:()=>setView('proposals')},'Cancelar'))),
-      prev&&e('div',{style:{flexShrink:0}},e(IGPreview,{p:prevP}))));
-}
-
-// ── PARRILLA ──────────────────────────────────────────
-function Parrilla({props,setView,setSel}){
-  const [wk,setWk]=useState('Semana 1');
-  const wps=props.filter(p=>p.week===wk);
-  return e('div',{className:'page',style:{padding:'24px 28px'}},
-    e('div',{style:r({justifyContent:'space-between',marginBottom:22})},
-      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 4px'}},'Parrilla Semanal'),e('div',{style:{fontSize:13,color:C.dim}},'Calendario · ',wk)),
-      e('div',{style:r({gap:6})},WEEKS.map(w=>e('button',{key:w,onClick:()=>setWk(w),style:{padding:'8px 13px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer',background:wk===w?`${C.blue}22`:C.bg2,border:wk===w?`1px solid ${C.blue}45`:`1px solid ${C.line}`,color:wk===w?C.blueB:C.dim}},w)))),
-    e('div',{style:{display:'grid',gridTemplateColumns:'56px repeat(7,1fr)',gap:8}},
-      e('div'),
-      DAYS.map(d=>e('div',{key:d,style:{padding:'8px 4px',textAlign:'center',fontSize:10,fontWeight:700,color:C.dim,textTransform:'uppercase',letterSpacing:.8}},d.substring(0,3))),
-      e('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:12}},e('span',{style:{fontSize:10,color:C.blueB,fontWeight:700,textTransform:'uppercase'}},wk.replace('Semana','S'))),
-      DAYS.map(day=>{
-        const dayPs=wps.filter(p=>p.day===day);
-        return e('div',{key:day,style:{minHeight:130,background:C.bg2,border:`1px solid ${C.line}`,borderRadius:14,padding:7,display:'flex',flexDirection:'column',gap:6}},
-          dayPs.length===0&&e('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:C.mute,fontSize:12}},'—'),
-          dayPs.map(p=>{
-            const sc=STS[p.status],tp=TPS[p.type];
-            return e('button',{key:p.id,onClick:()=>{setSel(p);setView('detail');},style:{display:'flex',flexDirection:'column',gap:2,padding:'7px 9px',background:`${sc.color}15`,border:`1px solid ${sc.color}30`,borderRadius:10,cursor:'pointer',textAlign:'left',width:'100%'}},
-              e('div',{style:{fontSize:9,fontWeight:800,color:sc.color,textTransform:'uppercase',letterSpacing:.5}},p.time),
-              e('div',{style:{fontSize:10,fontWeight:700,color:C.ink,lineHeight:1.4,overflow:'hidden'}},p.title.replace(/^[^:]+: /,'')),
-              e('div',{style:r({gap:4})},tp&&tp.icon(8),e('span',{style:{fontSize:8,color:C.dim}},p.author)));
-          }));
-      }),
-      [2,3,4].flatMap(n=>[
-        e('div',{key:`l${n}`,style:{display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:12}},e('span',{style:{fontSize:10,color:C.mute,fontWeight:700}},`S${n+1}`)),
-        ...DAYS.map(d=>e('div',{key:`${n}${d}`,style:{minHeight:60,background:`${C.bg2}55`,border:`1px dashed ${C.line}`,borderRadius:14}}))
-      ])),
-    e('div',{style:r({gap:16,marginTop:18,flexWrap:'wrap'})},
-      Object.entries(STS).map(([k,v])=>e('div',{key:k,style:r({gap:6})},e('div',{style:{width:10,height:10,borderRadius:3,background:v.color,boxShadow:`0 0 6px ${v.color}66`}}),e('span',{style:{fontSize:11,color:C.dim}},v.label)))));
-}
-
-// ── TARGETS ───────────────────────────────────────────
-function Targets(){
-  return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:920}},
-    e('div',{style:{marginBottom:24}},e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Targets & Audiencia'),e('div',{style:{fontSize:13,color:C.dim}},'Segmentos definidos para campañas GTAHUB')),
-    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
-      TARGETS.map(t=>e(Card,{key:t.id,sx:{padding:'20px',position:'relative',overflow:'hidden'}},
-        e('div',{style:{position:'absolute',top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${t.color},${t.color}44)`,borderRadius:'20px 20px 0 0'}}),
-        e('div',{style:r({justifyContent:'space-between',marginBottom:16})},
-          e('div',null,e('div',{style:{fontSize:16,fontWeight:800,color:C.ink}},t.name),e('div',{style:{fontSize:11,color:C.dim,marginTop:2}},t.platform)),
-          e('div',{style:{textAlign:'right'}},e('div',{style:{fontSize:26,fontWeight:900,color:t.color,letterSpacing:-1}},t.size),e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'usuarios est.'))),
-        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}},
-          [['Edad',t.age],['Género',t.gender],['Ubicación',t.location]].map(([k,v])=>e('div',{key:k,style:{background:C.bg3,borderRadius:10,padding:'8px 12px'}},e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.7,marginBottom:3}},k),e('div',{style:{fontSize:12,fontWeight:700,color:C.ink}},v)))),
-        e('div',{style:r({gap:5,flexWrap:'wrap'})},t.interests.map(i=>e(Pill,{key:i,label:i,color:t.color})))))));
-}
-
-// ── ADS ───────────────────────────────────────────────
-function Ads(){
-  const total=CAMPS.reduce((s,c)=>s+c.budget,0);
-  const spent=CAMPS.reduce((s,c)=>s+c.spent,0);
-  return e('div',{className:'page',style:{padding:'26px 30px',maxWidth:920}},
-    e('div',{style:r({justifyContent:'space-between',marginBottom:24})},
-      e('div',null,e('h1',{style:{fontSize:22,fontWeight:900,color:C.ink,margin:'0 0 5px'}},'Ads & Campañas'),e('div',{style:{fontSize:13,color:C.dim}},'Presupuesto · Mayo 2026')),
-      e(Btn,{v:'pri',sm:true},IC.Plus(13),' Nueva campaña')),
-    e('div',{style:r({gap:14,marginBottom:26,flexWrap:'wrap'})},
-      e(Stat,{label:'Presupuesto total',value:`$${total.toLocaleString()}`,color:C.gold,  IcoFn:(s)=>IC.BarChart(s,C.gold)}),
-      e(Stat,{label:'Invertido',        value:`$${spent.toLocaleString()}`,color:C.red,   IcoFn:(s)=>IC.TrendUp(s,C.red)}),
-      e(Stat,{label:'Disponible',       value:`$${(total-spent).toLocaleString()}`,color:C.green,IcoFn:(s)=>IC.Dollar(s,C.green)}),
-      e(Stat,{label:'Activas',          value:CAMPS.filter(c=>c.status==='active').length,color:C.cyan, IcoFn:(s)=>IC.Activity(s,C.cyan)})),
-    e('div',{style:co({gap:12})},
-      CAMPS.map(camp=>{
-        const pct=Math.round((camp.spent/camp.budget)*100);
-        const sc={active:C.green,completed:C.dim,scheduled:C.cyan}[camp.status];
-        const sl={active:'Activa',completed:'Completada',scheduled:'Programada'}[camp.status];
-        return e(Card,{key:camp.id,sx:{padding:'20px 22px'}},
-          e('div',{style:r({gap:16})},
-            e('div',{style:{width:4,borderRadius:2,background:`linear-gradient(180deg,${camp.color},${camp.color}44)`,alignSelf:'stretch',flexShrink:0}}),
-            e('div',{style:{flex:1,minWidth:0}},
-              e('div',{style:r({justifyContent:'space-between',marginBottom:12})},
-                e('div',null,
-                  e('div',{style:{fontSize:15,fontWeight:800,color:C.ink,marginBottom:4}},camp.name),
-                  e('div',{style:r({gap:10,flexWrap:'wrap'})},e('span',{style:{fontSize:11,color:C.dim}},camp.platform,' · ',camp.startDate,' – ',camp.endDate),e('span',{style:{fontSize:11,color:C.eGrn}},'📊 ',camp.reach))),
-                e('div',{style:r({gap:12,alignItems:'center',flexShrink:0})},
-                  e('span',{style:{fontSize:11,fontWeight:700,color:sc,background:`${sc}18`,padding:'4px 10px',borderRadius:999,border:`1px solid ${sc}30`}},sl),
-                  e('div',{style:{textAlign:'right'}},e('div',{style:{fontSize:18,fontWeight:900,color:camp.color,letterSpacing:-.5}},'$',camp.budget.toLocaleString()),e('div',{style:{fontSize:9,color:C.mute,textTransform:'uppercase',letterSpacing:.5}},'presupuesto')))),
-              e('div',{style:{background:C.bg3,borderRadius:6,height:7,overflow:'hidden',marginBottom:6}},
-                e('div',{style:{height:'100%',width:`${pct}%`,background:`linear-gradient(90deg,${camp.color},${camp.color}77)`,borderRadius:6}})),
-              e('div',{style:r({justifyContent:'space-between'})},e('span',{style:{fontSize:10,color:C.dim}},'Gastado: $',camp.spent.toLocaleString()),e('span',{style:{fontSize:10,color:camp.color,fontWeight:800}},pct,'%')))));
-      })));
-}
-
-// ── ROOT ──────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════════════════════════ */
 function App(){
-  const [user,setUser]=useState(null);
-  const [view,setView]=useState('dashboard');
-  const [props,setProps]=useState([]);
-  const [loading,setLoading]=useState(false);
-  const [sel,setSel]=useState(null);
-  const [toast,setToast]=useState(null);
+  const [view, setView] = useState('home');             // home | map | chat | menu
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [reportFlow, setReportFlow] = useState(null);   // {type, subtype, lat, lng, ...} | null
+  const [detail, setDetail] = useState(null);           // selected report
+  const [toast, setToast] = useState(null);
+  const [reminderQueue, setReminderQueue] = useState([]);
+
+  const showToast = useCallback((msg, kind='info')=>{
+    setToast({msg, kind});
+    setTimeout(()=>setToast(t=>t?.msg===msg?null:t), 3200);
+  },[]);
 
   useEffect(()=>{
-    if(!user) return;
-    setLoading(true);
-    api.get().then(d=>setProps(d)).catch(()=>setProps(MOCK)).finally(()=>setLoading(false));
-  },[user]);
+    let mounted=true;
+    api.listReports().then(d=>{ if(mounted){ setReports(d); setLoading(false); } }).catch(err=>{ console.error(err); setLoading(false); });
+    const unsub = api.subscribeRealtime(()=>{ api.listReports().then(setReports); });
+    return ()=>{ mounted=false; unsub(); };
+  },[]);
 
-  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200);};
+  // Check for own reports needing reminder
+  useEffect(()=>{
+    try{
+      const mine = JSON.parse(localStorage.getItem('amid_mine')||'[]');
+      const dismissed = JSON.parse(localStorage.getItem('amid_dismissed_reminders')||'[]');
+      const pending = mine
+        .map(m=>reports.find(r=>r.id===m.id))
+        .filter(r=>r && r.status==='active' && !dismissed.includes(r.id))
+        .filter(r=>(Date.now()-new Date(r.reported_at).getTime())/3600e3 >= REMINDER_HOURS);
+      setReminderQueue(pending);
+    }catch{}
+  },[reports]);
 
-  if(!user) return e(Login,{onLogin:u=>{setUser(u);setView('dashboard');}});
+  const counts = useMemo(()=>{
+    const active = reports.filter(r=>r.status==='active');
+    return { power: active.filter(r=>r.type==='power').length, water: active.filter(r=>r.type==='water').length };
+  },[reports]);
 
-  const pages={
-    dashboard:    ()=>e(Dashboard,    {props,setView,setSel,user}),
-    proposals:    ()=>e(Proposals,    {props,setProps,setView,setSel,user,toast:showToast}),
-    detail:       ()=>sel?e(Detail,   {initP:sel,props,setProps,setView,user,toast:showToast}):e(Proposals,{props,setProps,setView,setSel,user,toast:showToast}),
-    'new-proposal':()=>e(NewProposal,{setProps,setView,user,toast:showToast}),
-    parrilla:     ()=>e(Parrilla,     {props,setView,setSel}),
-    targets:      ()=>e(Targets,      {}),
-    ads:          ()=>e(Ads,          {}),
+  const openReportFlow = (type)=>setReportFlow({type, step:1, subtype:null, lat:null, lng:null, severity:'moderate', description:'', name:'', phone:'', photo:null});
+
+  return e('div',{className:'app'},
+    e('header',{className:'appbar'},
+      e('div',{className:'appbar-icon'}, e(AppIcon,{size:22})),
+      e('div',{className:'brand'}, e('span',{className:'p1'},'Apagones'), e('span',{className:'p2'},' Mid')),
+      e('div',{style:{marginLeft:'auto',display:'flex',gap:6,alignItems:'center'}},
+        e('span',{className:'counter apag'}, Ic.bolt(10,'currentColor'),' ',counts.power),
+        e('span',{className:'counter agua'}, Ic.drop(10,'currentColor'),' ',counts.water)
+      )
+    ),
+    e('main',{className:'view', key:view},
+      view==='home' && e(Home,{reports,openReportFlow,setView,setDetail,loading}),
+      view==='map'  && e(MapView,{reports,setDetail,openReportFlow}),
+      view==='chat' && e(Chat,{reports,counts,setView,openReportFlow}),
+      view==='menu' && e(Menu,{showToast})
+    ),
+    e('nav',{className:'nav'},
+      [{id:'home',label:'Inicio',ic:Ic.home},{id:'map',label:'Mapa',ic:Ic.map},{id:'chat',label:'Apagoncito',ic:Ic.chat},{id:'menu',label:'Menú',ic:Ic.menu}]
+        .map(n=>e('button',{key:n.id,className:view===n.id?'on':'',onClick:()=>setView(n.id)},
+          n.ic(18, view===n.id?'#fff':'var(--gr4)'),
+          e('span',null,n.label)
+        ))
+    ),
+    reportFlow && e(ReportFlow,{state:reportFlow, setState:setReportFlow, onClose:()=>setReportFlow(null), onDone:async(payload)=>{
+      try{
+        let profileId = null;
+        if(payload.name || payload.phone){
+          const p = await api.saveProfile({name:payload.name||null, phone:payload.phone||null});
+          profileId = p.id;
+        }
+        const r = await api.createReport({
+          type: payload.type, subtype: payload.subtype,
+          lat: payload.lat, lng: payload.lng,
+          zone: payload.zone || null, severity: payload.severity,
+          description: payload.description || null,
+          reporter_id: profileId, photo_url: payload.photo || null
+        });
+        const mine = JSON.parse(localStorage.getItem('amid_mine')||'[]');
+        mine.push({id:r.id, at:Date.now()});
+        localStorage.setItem('amid_mine', JSON.stringify(mine));
+        setReports(prev=>[r, ...prev]);
+        setReportFlow(null);
+        showToast('Reporte enviado · Gracias por tu voz', 'ok');
+      }catch(err){
+        console.error(err); showToast('No se pudo enviar el reporte', 'err');
+      }
+    }}),
+    detail && e(Detail,{report:detail, onClose:()=>setDetail(null), onConfirm:async(kind)=>{
+      try{
+        await api.confirmReport(detail.id, kind);
+        showToast(kind==='resolved'?'Gracias · Reporte marcado como resuelto':'Gracias por corroborar','ok');
+        const fresh = await api.listReports(); setReports(fresh);
+        if(kind==='resolved') setDetail(null);
+      }catch(err){ console.error(err); showToast('No se pudo confirmar','err'); }
+    }}),
+    reminderQueue[0] && e(Reminder,{report:reminderQueue[0],
+      onYes:async()=>{
+        await api.confirmReport(reminderQueue[0].id,'resolved');
+        showToast('Gracias por confirmar la reparación','ok');
+        const fresh = await api.listReports(); setReports(fresh);
+        setReminderQueue(q=>q.slice(1));
+      },
+      onLater:()=>setReminderQueue(q=>q.slice(1)),
+      onMute:()=>{
+        const dismissed = JSON.parse(localStorage.getItem('amid_dismissed_reminders')||'[]');
+        dismissed.push(reminderQueue[0].id);
+        localStorage.setItem('amid_dismissed_reminders', JSON.stringify(dismissed));
+        setReminderQueue(q=>q.slice(1));
+      }
+    }),
+    toast && e('div',{className:`toast ${toast.kind}`},
+      e('span',{className:'dot-pulse',style:{background:'currentColor'}}), toast.msg)
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HOME · Bienvenida + reporte rápido
+═══════════════════════════════════════════════════════════════ */
+function Home({reports, openReportFlow, setView, setDetail, loading}){
+  const recent = reports.filter(r=>r.status==='active').slice(0,3);
+  return e('div',{style:{padding:'14px 16px 20px',display:'flex',flexDirection:'column',gap:14}},
+    e('div',{style:{display:'flex',justifyContent:'center',padding:'10px 0 0'}}, e('div',{className:'mascot-glow'}, e(Apagoncito,{size:130}))),
+    e('div',{style:{textAlign:'center'}},
+      e('div',{className:'font-n',style:{fontWeight:900,fontSize:22,marginBottom:4}}, '¿Sin luz o sin agua?'),
+      e('div',{style:{fontSize:12,color:'var(--gr4)'}}, 'Tu reporte es nuestra voz · Mérida en vivo')
+    ),
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:4}},
+      e('button',{className:'card',style:{textAlign:'center',padding:'18px 12px'},onClick:()=>openReportFlow('power')},
+        e('div',{style:{fontSize:28,color:'var(--amb)',marginBottom:6}}, '⚡'),
+        e('div',{className:'font-n',style:{fontWeight:900,fontSize:14,color:'var(--amb)'}}, 'SIN LUZ'),
+        e('div',{style:{fontSize:10,color:'var(--gr4)',marginTop:3}}, 'Apagón en casa o calle')
+      ),
+      e('button',{className:'card',style:{textAlign:'center',padding:'18px 12px'},onClick:()=>openReportFlow('water')},
+        e('div',{style:{fontSize:28,color:'var(--tb)',marginBottom:6}}, '💧'),
+        e('div',{className:'font-n',style:{fontWeight:900,fontSize:14,color:'var(--tb)'}}, 'SIN AGUA'),
+        e('div',{style:{fontSize:10,color:'var(--gr4)',marginTop:3}}, 'Fuga, corte, presión')
+      )
+    ),
+    e('button',{className:'btn btn-gh',style:{width:'100%',marginTop:2},onClick:()=>setView('map')},
+      Ic.map(15,'var(--gr5)'),' Ver zonas afectadas'),
+    e('div',{style:{marginTop:8}},
+      e('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}},
+        e('span',{className:'lbl-up'},'Reportes recientes'),
+        recent.length>0 && e('button',{onClick:()=>setView('map'),style:{fontSize:11,color:'var(--gb)',fontWeight:700}},'Ver mapa →')
+      ),
+      loading
+        ? e('div',{style:{display:'flex',justifyContent:'center',padding:24}}, e('div',{className:'spinner'}))
+        : recent.length===0
+          ? e('div',{className:'card',style:{textAlign:'center',color:'var(--gr4)',fontSize:12,padding:20}}, 'Sin reportes activos en Mérida · Buen momento ✨')
+          : e('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+              recent.map(r=>e('button',{key:r.id,className:'card',style:{display:'flex',alignItems:'center',gap:10,textAlign:'left'},onClick:()=>setDetail(r)},
+                e('div',{style:{width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:r.type==='power'?'rgba(245,166,35,.15)':'rgba(18,203,240,.15)',flexShrink:0}},
+                  e('span',{style:{fontSize:16}}, r.type==='power'?'⚡':'💧')),
+                e('div',{style:{flex:1,minWidth:0}},
+                  e('div',{style:{fontWeight:700,fontSize:13,color:'var(--wh)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},
+                    r.zone || (TYPE_META[r.type].subtypes[r.subtype]||TYPE_META[r.type].label)),
+                  e('div',{style:{fontSize:11,color:'var(--gr4)',marginTop:1}}, fmtAgo(r.reported_at), ' · ', r.confirmations_count||0, ' confirman')
+                ),
+                e('span',{style:{fontSize:9,fontWeight:700,padding:'3px 8px',borderRadius:8,background:`rgba(245,166,35,.12)`,color:SEV_META[r.severity]?.color||'var(--gr4)',border:`1px solid ${SEV_META[r.severity]?.dot||'var(--gr2)'}40`}},
+                  SEV_META[r.severity]?.label||'—')
+              ))
+            )
+    )
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAP · Leaflet
+═══════════════════════════════════════════════════════════════ */
+function MapView({reports, setDetail, openReportFlow}){
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
+
+  useEffect(()=>{
+    if(!containerRef.current || mapRef.current) return;
+    const m = L.map(containerRef.current,{zoomControl:true,attributionControl:true}).setView([MERIDA.lat, MERIDA.lng], MERIDA.zoom);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+      maxZoom:19,
+      attribution:'© OpenStreetMap · CARTO'
+    }).addTo(m);
+    mapRef.current = m;
+    setTimeout(()=>m.invalidateSize(),50);
+  },[]);
+
+  useEffect(()=>{
+    const m = mapRef.current; if(!m) return;
+    markersRef.current.forEach(mk=>m.removeLayer(mk));
+    markersRef.current = [];
+    reports.forEach(r=>{
+      const cls = r.status==='resolved' ? 'pin-res' : (r.type==='power' ? 'pin-amb' : 'pin-t');
+      const html = `<div class="pin ${cls}">${r.type==='power'?'⚡':'💧'}</div>`;
+      const icon = L.divIcon({ html, className:'', iconSize:[34,34], iconAnchor:[17,30] });
+      const mk = L.marker([r.lat, r.lng],{icon}).addTo(m);
+      mk.on('click',()=>setDetail(r));
+      markersRef.current.push(mk);
+    });
+  },[reports, setDetail]);
+
+  const locate = ()=>{
+    if(!navigator.geolocation || !mapRef.current) return;
+    navigator.geolocation.getCurrentPosition(p=>{
+      mapRef.current.flyTo([p.coords.latitude, p.coords.longitude], 15);
+    });
   };
 
-  return e('div',{style:{display:'flex',height:'100vh',background:C.bg,color:C.ink,overflow:'hidden'}},
-    e(Sidebar,{view,setView,user,setUser,props}),
-    e('main',{style:{flex:1,overflow:'auto',position:'relative',background:`radial-gradient(ellipse at 80% 5%,${C.blue}06 0%,transparent 40%),${C.bg}`}},
-      toast&&e(Toast,{msg:toast.msg,type:toast.type,onClose:()=>setToast(null)}),
-      loading&&e('div',{style:{position:'absolute',top:0,left:0,right:0,height:2,zIndex:100,background:`linear-gradient(90deg,${C.blue},${C.cyan},${C.purple})`,overflow:'hidden'}},
-        e('div',{style:{position:'absolute',top:0,bottom:0,width:'40%',background:'rgba(255,255,255,.3)',animation:'shimmer 1.2s linear infinite'}})),
-      (pages[view]||(()=>null))()));
+  return e('div',{style:{flex:1,position:'relative',display:'flex',flexDirection:'column'}},
+    e('div',{style:{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderBottom:'1px solid var(--gr1)',background:'var(--d2)'}},
+      Ic.search(14,'var(--gr4)'),
+      e('input',{className:'field',placeholder:'Buscar colonia o calle…',style:{padding:'7px 10px',fontSize:12,background:'var(--d3)'}})
+    ),
+    e('div',{ref:containerRef,style:{flex:1,position:'relative'}}),
+    e('button',{className:'fab-2',onClick:locate,title:'Mi ubicación'}, Ic.pin(18,'var(--gr5)')),
+    e('button',{className:'fab',onClick:()=>openReportFlow('water')}, Ic.plus(26,'#fff'))
+  );
 }
 
-// Render con try/catch para mostrar error visible si falla
-try{
-  ReactDOM.render(e(App),document.getElementById('root'));
-}catch(err){
-  document.getElementById('root').innerHTML=
-    '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;background:#07101e;color:#ff3b5c">'+
-    '<div style="font-size:48px">⚠️</div>'+
-    '<div style="font-size:18px;font-weight:700">Error al cargar</div>'+
-    '<div style="font-size:12px;color:#6b7a99;max-width:400px;text-align:center;font-family:monospace;background:#0c1524;padding:12px 16px;border-radius:8px">'+err.message+'</div>'+
-    '</div>';
-  console.error(err);
+/* ═══════════════════════════════════════════════════════════════
+   REPORT FLOW · 3 pasos
+═══════════════════════════════════════════════════════════════ */
+function ReportFlow({state, setState, onClose, onDone}){
+  const t = TYPE_META[state.type];
+  const step = state.step;
+  const totalSteps = 3;
+  const set = (patch)=>setState(s=>({...s, ...patch}));
+
+  const canNext = step===1
+    ? !!state.subtype
+    : step===2
+      ? state.lat!=null && state.lng!=null
+      : !!state.severity;
+
+  return e('div',{className:'sheet',onClick:onClose},
+    e('div',{className:'sheet-inner',onClick:ev=>ev.stopPropagation()},
+      e('div',{className:'sheet-pill'}),
+      e('div',{className:'progress'},
+        Array.from({length:totalSteps}).map((_,i)=>e('div',{key:i,className:`progress-bar ${i<step-1?'done':i===step-1?'active':''}`}))
+      ),
+      step===1 && e(StepType,{state,set,t}),
+      step===2 && e(StepLocation,{state,set,t}),
+      step===3 && e(StepDetails,{state,set,t}),
+      e('div',{style:{display:'grid',gridTemplateColumns:step===1?'1fr 2fr':'1fr 2fr',gap:8,marginTop:14}},
+        e('button',{className:'btn btn-gh',onClick:()=>step===1 ? onClose() : set({step:step-1})}, step===1?'Cancelar':e('span',null, Ic.arrow(12,'currentColor','left'),' Atrás')),
+        e('button',{className:'btn btn-p',disabled:!canNext,style:{background:canNext?'var(--g)':'var(--gr2)',color:canNext?'#fff':'var(--gr4)'},onClick:()=>{
+          if(step<totalSteps) set({step:step+1});
+          else onDone(state);
+        }}, step<totalSteps ? e('span',null,'Continuar ',Ic.arrow(12,'currentColor')) : `Reportar ${t.label} 📍`)
+      )
+    )
+  );
 }
+
+function StepType({state,set,t}){
+  return e('div',null,
+    e('div',{className:'h1'}, '¿Qué está pasando?'),
+    e('div',{className:'sub'}, 'Selecciona el tipo de incidencia'),
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}},
+      ['power','water'].map(k=>{
+        const tm = TYPE_META[k]; const sel = state.type===k;
+        return e('button',{key:k,className:`card ${sel?(k==='power'?'sel-amb':'sel-t'):''}`,style:{textAlign:'center',padding:14},onClick:()=>set({type:k, subtype:null})},
+          e('div',{style:{width:34,height:34,borderRadius:8,margin:'0 auto 6px',display:'flex',alignItems:'center',justifyContent:'center',background:sel?'var(--g)':'var(--d3)'}},
+            e('span',{style:{fontSize:18}}, tm.emoji)),
+          e('div',{className:'font-n',style:{fontWeight:900,fontSize:13,color:tm.color}}, tm.label.toUpperCase()),
+          e('div',{style:{fontSize:10,color:'var(--gr4)',marginTop:2}}, k==='power'?'Sin electricidad':'Fuga, corte o calidad')
+        );
+      })
+    ),
+    e('div',{className:'lbl-up',style:{color:t.color,display:'flex',alignItems:'center',gap:6}}, t.emoji,' ¿', state.type==='power'?'DÓNDE NO HAY LUZ':'QUÉ PASA CON EL AGUA', '?'),
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+      Object.entries(t.subtypes).map(([k,label])=>{
+        const sel = state.subtype===k;
+        const cls = state.type==='power' ? (sel?'sel-amb':'') : (sel?'sel-t':'');
+        return e('button',{key:k,className:`card ${cls}`,style:{textAlign:'center',padding:'12px 8px'},onClick:()=>set({subtype:k})},
+          e('div',{className:'font-n',style:{fontWeight:800,fontSize:12,color:t.color}}, label),
+        );
+      })
+    )
+  );
+}
+
+function StepLocation({state,set,t}){
+  const ref = useRef(null), mapRef=useRef(null), markerRef=useRef(null);
+  const [mode,setMode] = useState(state.lat?null:null);
+
+  useEffect(()=>{
+    if(mode!=='pick' || !ref.current || mapRef.current) return;
+    const m = L.map(ref.current,{zoomControl:false,attributionControl:false}).setView([state.lat||MERIDA.lat,state.lng||MERIDA.lng], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(m);
+    mapRef.current = m;
+    setTimeout(()=>m.invalidateSize(),50);
+    if(state.lat){
+      markerRef.current = L.marker([state.lat,state.lng]).addTo(m);
+    }
+    m.on('click',(ev)=>{
+      if(markerRef.current) m.removeLayer(markerRef.current);
+      markerRef.current = L.marker(ev.latlng).addTo(m);
+      set({lat:ev.latlng.lat, lng:ev.latlng.lng});
+    });
+    return ()=>{ m.remove(); mapRef.current=null; };
+  },[mode]);
+
+  const useGPS = ()=>{
+    if(!navigator.geolocation){ alert('Tu navegador no soporta GPS'); return; }
+    navigator.geolocation.getCurrentPosition(
+      p=>{ set({lat:p.coords.latitude, lng:p.coords.longitude}); setMode('gps'); },
+      err=>{ alert('No pudimos obtener tu ubicación: '+err.message); }
+    );
+  };
+
+  return e('div',null,
+    e('div',{className:'h1'}, '¿Dónde ocurre?'),
+    e('div',{className:'sub'}, 'Ubica el problema en el mapa'),
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}},
+      e('button',{className:`card ${mode==='gps'?'sel-amb':''}`,style:{display:'flex',alignItems:'center',gap:10,padding:12,textAlign:'left'},onClick:useGPS},
+        e('span',{style:{fontSize:20}}, '📍'),
+        e('div',null, e('div',{style:{fontWeight:700,fontSize:12}},'Mi ubicación'), e('div',{style:{fontSize:10,color:'var(--gr4)'}},'GPS automático'))
+      ),
+      e('button',{className:`card ${mode==='pick'?'sel-amb':''}`,style:{display:'flex',alignItems:'center',gap:10,padding:12,textAlign:'left'},onClick:()=>setMode('pick')},
+        e('span',{style:{fontSize:20}}, '🗺️'),
+        e('div',null, e('div',{style:{fontWeight:700,fontSize:12}},'Marcar mapa'), e('div',{style:{fontSize:10,color:'var(--gr4)'}},'Toca ubicación'))
+      )
+    ),
+    mode==='pick' && e('div',{ref,style:{height:220,borderRadius:10,overflow:'hidden',border:'1px solid var(--gr1)',marginBottom:10}}),
+    state.lat
+      ? e('div',{style:{background:'rgba(34,197,94,.08)',border:'1px solid rgba(34,197,94,.25)',borderRadius:9,padding:'9px 12px',fontSize:11,color:'var(--green)',display:'flex',alignItems:'center',gap:8}}, Ic.check(14,'var(--green)'),' Ubicación lista · ',state.lat.toFixed(4),', ',state.lng.toFixed(4))
+      : e('div',{style:{background:'var(--d3)',border:'1px solid var(--gr1)',borderRadius:9,padding:'11px',fontSize:11,color:'var(--gr4)',display:'flex',gap:6}}, '📌 Elige cómo ubicar tu reporte')
+  );
+}
+
+function StepDetails({state,set,t}){
+  const onPhoto = (ev)=>{
+    const f = ev.target.files?.[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>set({photo:reader.result});
+    reader.readAsDataURL(f);
+  };
+  return e('div',null,
+    e('div',{className:'h1'}, 'Datos del reporte'),
+    e('div',{className:'sub'}, 'Severidad, foto y contacto (privado)'),
+    e('span',{className:'lbl-up'}, 'Severidad'),
+    e('div',{className:'sev-row',style:{marginBottom:14}},
+      Object.entries(SEV_META).map(([k,sv])=>e('button',{key:k,className:`sev ${state.severity===k?'on':''}`,onClick:()=>set({severity:k})},
+        e('span',{className:'dot',style:{background:sv.dot}}), sv.label
+      ))
+    ),
+    e('span',{className:'lbl-up'}, '📸 Foto del corte (opcional)'),
+    state.photo
+      ? e('div',{style:{position:'relative',marginBottom:12}},
+          e('img',{src:state.photo,className:'report-photo'}),
+          e('button',{onClick:()=>set({photo:null}),style:{position:'absolute',top:6,right:6,background:'rgba(0,0,0,.75)',borderRadius:'50%',width:26,height:26,display:'flex',alignItems:'center',justifyContent:'center'}}, Ic.x(12,'#fff'))
+        )
+      : e('label',{style:{display:'block',background:'var(--d3)',border:'1px dashed var(--gr2)',borderRadius:9,padding:16,textAlign:'center',marginBottom:12,cursor:'pointer'}},
+          Ic.cam(22,'var(--gr4)'),
+          e('div',{style:{fontSize:11,color:'var(--gr4)',marginTop:4}}, 'Tomar foto o subir imagen'),
+          e('input',{type:'file',accept:'image/*',capture:'environment',onChange:onPhoto,style:{display:'none'}})
+        ),
+    e('span',{className:'lbl-up'}, 'Comentario (opcional)'),
+    e('textarea',{className:'field',rows:2,placeholder:'¿Algo más que debamos saber?',value:state.description,onChange:ev=>set({description:ev.target.value}),style:{marginBottom:10,resize:'none'}}),
+    e('span',{className:'lbl-up'}, 'Tu nombre (privado)'),
+    e('input',{className:'field',placeholder:'Ej. María González',value:state.name,onChange:ev=>set({name:ev.target.value}),style:{marginBottom:10}}),
+    e('span',{className:'lbl-up'}, 'Teléfono / WhatsApp (privado)'),
+    e('input',{className:'field',type:'tel',placeholder:'+52 999 123 4567',value:state.phone,onChange:ev=>set({phone:ev.target.value})}),
+    e('div',{style:{background:'rgba(11,168,196,.08)',border:'1px solid rgba(11,168,196,.2)',borderRadius:9,padding:'10px 12px',marginTop:12,display:'flex',gap:8,alignItems:'flex-start'}},
+      e('span',{style:{fontSize:13}}, '🔒'),
+      e('div',{style:{fontSize:10,color:'var(--gr5)',lineHeight:1.5}}, 'Tu nombre y teléfono son ',e('strong',null,'privados'),'. Solo los ve el administrador. Nunca aparecen en el mapa.')
+    )
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DETAIL · Modal de reporte
+═══════════════════════════════════════════════════════════════ */
+function Detail({report:r, onClose, onConfirm}){
+  const t = TYPE_META[r.type], sv = SEV_META[r.severity];
+  const sub = t.subtypes[r.subtype];
+  return e('div',{className:'sheet',onClick:onClose},
+    e('div',{className:'sheet-inner',onClick:ev=>ev.stopPropagation()},
+      e('div',{className:'sheet-pill'}),
+      e('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:12}},
+        e('div',{style:{width:42,height:42,borderRadius:10,background:r.type==='power'?'rgba(245,166,35,.18)':'rgba(18,203,240,.18)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}, t.emoji),
+        e('div',{style:{flex:1}},
+          e('div',{className:'h2',style:{color:t.color}}, sub||t.label),
+          e('div',{style:{fontSize:11,color:'var(--gr4)',marginTop:2}}, r.zone||'Mérida',' · ',fmtAgo(r.reported_at))
+        ),
+        e('span',{style:{fontSize:10,fontWeight:700,padding:'4px 10px',borderRadius:8,background:`${sv?.dot||'#888'}22`,color:sv?.color||'var(--gr4)',border:`1px solid ${sv?.dot||'#888'}55`}}, sv?.label||'—')
+      ),
+      r.description && e('div',{style:{background:'var(--d3)',borderRadius:9,padding:'10px 12px',marginBottom:12,fontSize:12,color:'var(--gr5)'}}, r.description),
+      r.photo_url && e('img',{src:r.photo_url,className:'report-photo',style:{marginBottom:12}}),
+      e('div',{style:{display:'flex',gap:10,justifyContent:'space-around',padding:'10px 0',background:'var(--d3)',borderRadius:10,marginBottom:12}},
+        e('div',{style:{textAlign:'center'}},
+          e('div',{style:{fontFamily:'Nunito',fontWeight:900,fontSize:20,color:'var(--wh)'}}, r.confirmations_count||0),
+          e('div',{style:{fontSize:9,color:'var(--gr4)',textTransform:'uppercase',letterSpacing:1}}, 'Confirman')
+        ),
+        e('div',{style:{width:1,background:'var(--gr1)'}}),
+        e('div',{style:{textAlign:'center'}},
+          e('div',{style:{fontFamily:'Nunito',fontWeight:900,fontSize:20,color:r.status==='resolved'?'var(--green)':'var(--amb)'}}, r.status==='resolved'?'✓':'·'),
+          e('div',{style:{fontSize:9,color:'var(--gr4)',textTransform:'uppercase',letterSpacing:1}}, r.status==='resolved'?'Resuelto':'Activo')
+        )
+      ),
+      r.status==='active' && e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+        e('button',{className:'btn btn-gh',onClick:()=>onConfirm('also_affected')}, '🙋 También me afecta'),
+        e('button',{className:'btn btn-suc',onClick:()=>onConfirm('resolved')}, Ic.check(14,'#fff'),' Ya se resolvió')
+      ),
+      r.status==='resolved' && e('div',{style:{textAlign:'center',padding:14,background:'rgba(34,197,94,.08)',border:'1px solid rgba(34,197,94,.25)',borderRadius:10,color:'var(--green)',fontSize:12,fontWeight:700}}, '✓ Reporte cerrado'),
+      e('button',{onClick:onClose,style:{display:'block',margin:'14px auto 0',fontSize:11,color:'var(--gr4)'}}, 'Cerrar')
+    )
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHAT · Apagoncito
+═══════════════════════════════════════════════════════════════ */
+function Chat({reports, counts, setView, openReportFlow}){
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState('');
+  const scrollRef = useRef(null);
+
+  const greet = useMemo(()=>{
+    if(counts.power===0 && counts.water===0) return 'No hay reportes activos en Mérida ahora mismo. ¡Buen momento! ☀️';
+    const partes = [];
+    if(counts.power>0) partes.push(`${counts.power} reporte${counts.power!==1?'s':''} de apagones`);
+    if(counts.water>0) partes.push(`${counts.water} reporte${counts.water!==1?'s':''} de agua`);
+    return `Ahora mismo hay ${partes.join(' y ')} en Mérida.`;
+  },[counts]);
+
+  useEffect(()=>{
+    setMsgs([{from:'bot', text:`**Apagoncito** aquí. ${greet} ¿En qué te ayudo?`}]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+  useEffect(()=>{ if(scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; },[msgs]);
+
+  const reply = (q)=>{
+    const k = q.toLowerCase();
+    const active = reports.filter(r=>r.status==='active');
+    if(/apag|luz|electric|cfe/.test(k)){
+      const pw = active.filter(r=>r.type==='power');
+      if(!pw.length) return 'Sin apagones activos en Mérida ahora ⚡✅';
+      const top = pw.slice(0,3).map(r=>`• ${r.zone||'Mérida'} (${fmtAgo(r.reported_at)})`).join('\n');
+      return `${pw.length} apagón${pw.length!==1?'es':''} activos:\n${top}`;
+    }
+    if(/agua|fuga|japay/.test(k)){
+      const w = active.filter(r=>r.type==='water');
+      if(!w.length) return 'Sin reportes de agua activos 💧✅';
+      const top = w.slice(0,3).map(r=>`• ${r.zone||'Mérida'} — ${TYPE_META.water.subtypes[r.subtype]||'reporte'} (${fmtAgo(r.reported_at)})`).join('\n');
+      return `${w.length} reporte${w.length!==1?'s':''} de agua:\n${top}`;
+    }
+    if(/zona|colonia|cerca|mi /.test(k)){
+      const byZone = {};
+      active.forEach(r=>{ if(r.zone){ byZone[r.zone] = (byZone[r.zone]||0)+1; } });
+      const top = Object.entries(byZone).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      if(!top.length) return 'Sin actividad por zona ahora mismo.';
+      return 'Top zonas con reportes:\n' + top.map(([z,n])=>`• ${z} — ${n}`).join('\n');
+    }
+    if(/reportar|nuevo|crear/.test(k)){
+      return 'Claro. ¿Es **sin luz** o **sin agua**? Usa los botones de inicio o el botón ➕ en el mapa.';
+    }
+    if(/hola|hi|hey|buen/.test(k)){
+      return `¡Hola! ${greet} Puedes preguntarme por *apagones*, *agua*, *zonas* o *cómo reportar*.`;
+    }
+    return `Puedes preguntarme por: *apagones*, *agua*, *mi zona*, *top zonas* o *cómo reportar*. ${greet}`;
+  };
+
+  const send = (txt)=>{
+    const t = (txt||input).trim(); if(!t) return;
+    setMsgs(m=>[...m,{from:'me',text:t}]);
+    setInput('');
+    setTimeout(()=>setMsgs(m=>[...m,{from:'bot', text: reply(t)}]), 320);
+  };
+
+  return e('div',{style:{display:'flex',flexDirection:'column',flex:1,minHeight:0}},
+    e('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderBottom:'1px solid var(--gr1)',background:'linear-gradient(160deg,var(--d4),#1A1020)'}},
+      e('div',{style:{width:46,height:46,position:'relative'}},
+        e('div',{style:{position:'absolute',inset:-3,borderRadius:'50%',border:'1px solid rgba(245,166,35,.18)',animation:'ring 3s ease-in-out infinite'}}),
+        e(Apagoncito,{size:46})
+      ),
+      e('div',null,
+        e('div',{className:'font-n',style:{fontWeight:900,fontSize:14,background:'linear-gradient(135deg,var(--ambb),var(--amb))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}, 'Apagoncito'),
+        e('div',{style:{fontSize:10,color:'var(--gr4)',display:'flex',alignItems:'center',gap:5}},
+          e('span',{style:{width:5,height:5,borderRadius:'50%',background:'#22C55E',boxShadow:'0 0 4px #22C55E'}}), 'Asistente · Mérida')
+      )
+    ),
+    e('div',{ref:scrollRef,style:{flex:1,overflowY:'auto',padding:'12px 12px 6px',display:'flex',flexDirection:'column',gap:8}},
+      msgs.map((m,i)=>e('div',{key:i,className:`bubble ${m.from==='me'?'bubble-me':''}`,style:{whiteSpace:'pre-line'}},
+        m.from==='bot' ? m.text.split('**').map((s,j)=>j%2 ? e('strong',{key:j},s) : s) : m.text
+      ))
+    ),
+    e('div',{style:{display:'flex',gap:6,padding:'4px 12px',overflowX:'auto'}},
+      [
+        {q:'⚡ Apagones',cls:'amb'},
+        {q:'💧 Agua',cls:'t'},
+        {q:'Mi zona',cls:''},
+        {q:'Top zonas',cls:''},
+        {q:'Cómo reportar',cls:''}
+      ].map(c=>e('button',{key:c.q,className:`chip ${c.cls}`,onClick:()=>send(c.q)}, c.q))
+    ),
+    e('div',{style:{display:'flex',gap:8,padding:'10px 12px',borderTop:'1px solid rgba(101,8,31,.3)',background:'var(--d2)'}},
+      e('input',{className:'field',style:{borderRadius:20,fontSize:12,padding:'9px 14px'},placeholder:'Pregúntale a Apagoncito…',value:input,onChange:ev=>setInput(ev.target.value),onKeyDown:ev=>{ if(ev.key==='Enter') send(); }}),
+      e('button',{onClick:()=>send(),style:{width:38,height:38,borderRadius:'50%',background:'var(--g)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}, Ic.send(15,'#fff'))
+    )
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MENU · Configuración y funciones
+═══════════════════════════════════════════════════════════════ */
+function Menu({showToast}){
+  const [notif, setNotif] = useState(()=>localStorage.getItem('amid_notif')==='1');
+  const [lang, setLang] = useState(()=>localStorage.getItem('amid_lang')||'es');
+
+  const toggleNotif = async()=>{
+    if(!notif && 'Notification' in window){
+      const p = await Notification.requestPermission();
+      if(p!=='granted'){ showToast('Permiso denegado para notificaciones','err'); return; }
+    }
+    const v = !notif; setNotif(v); localStorage.setItem('amid_notif', v?'1':'0');
+    showToast(v?'Notificaciones activadas':'Notificaciones desactivadas', v?'ok':'info');
+  };
+
+  const items = [
+    { key:'notif', emoji:'🔔', label:'Notificaciones', sub:notif?'Activas ✓':'Desactivadas', bg:'#1A2A1A', onClick:toggleNotif },
+    { key:'history', emoji:'🕐', label:'Historial de zonas', sub:'Últimos 30 días', bg:'#1A1A2A', onClick:()=>showToast('Historial · próximamente','info') },
+    { key:'cfe', emoji:'📞', label:'Reportar a CFE / JAPAY', sub:'Contacto oficial', bg:'#2A1A10', onClick:()=>window.open('tel:071','_self') },
+    { key:'911', emoji:'🚨', label:'Emergencias', sub:'CFE · JAPAY · Cruz Roja · 911', bg:'rgba(101,8,31,.3)', onClick:()=>showToast('911 · 071 · 073','info') },
+    { key:'ranking', emoji:'📊', label:'Ranking de zonas', sub:'Las más activas este mes', bg:'#1A2010', onClick:()=>showToast('Ranking · próximamente','info') },
+    { key:'lang', emoji:'🌐', label:'Idioma · Language · K\'aay', sub:({es:'Español',en:'English',maya:'Maya'}[lang]), bg:'#0A1A20', onClick:()=>{
+      const next = lang==='es'?'en':lang==='en'?'maya':'es';
+      setLang(next); localStorage.setItem('amid_lang', next);
+      showToast(`Idioma: ${ {es:'Español',en:'English',maya:'Maya'}[next] } (i18n próximo)`, 'info');
+    }},
+    { key:'widget', emoji:'📋', label:'Widget de inicio', sub:'Estado en pantalla inicio', bg:'#201A10', onClick:()=>showToast('Widget · próximamente','info') },
+    { key:'bulletin', emoji:'📰', label:'Boletín semanal', sub:'Resumen para medios', bg:'#0A1A15', onClick:()=>showToast('Boletín · próximamente','info') },
+    { key:'pdf', emoji:'📄', label:'Carta de queja PDF', sub:'CFE o JAPAY — formal', bg:'#1A1520', onClick:()=>showToast('Generador PDF · próximamente','info') },
+  ];
+
+  return e('div',{style:{padding:'10px 0 24px'}},
+    e('div',{style:{textAlign:'center',padding:'14px 16px 18px',borderBottom:'1px solid var(--gr1)',marginBottom:6}},
+      e('div',{className:'mascot-glow',style:{display:'inline-block'}}, e(Apagoncito,{size:80})),
+      e('div',{className:'font-n',style:{fontWeight:900,fontSize:16,marginTop:8}}, '¿Sin luz o sin agua?'),
+      e('div',{style:{fontSize:11,color:'var(--gr4)'}}, 'Tu reporte es nuestra voz')
+    ),
+    items.map(it=>e('button',{key:it.key,className:'menu-item',onClick:it.onClick},
+      e('div',{className:'menu-icon',style:{background:it.bg}}, it.emoji),
+      e('div',{style:{flex:1,minWidth:0,textAlign:'left'}},
+        e('div',{style:{fontWeight:600,fontSize:13,color:'var(--wh)'}}, it.label),
+        e('div',{style:{fontSize:11,color:'var(--gr4)',marginTop:1}}, it.sub)
+      ),
+      e('span',{style:{color:'var(--gr4)',fontSize:18}}, '›')
+    )),
+    e('div',{style:{padding:'24px 16px 8px',textAlign:'center',color:'var(--gr3)',fontSize:10,letterSpacing:1}},
+      'ApagonesMid · v1 · Mérida, Yucatán',
+      e('div',{style:{marginTop:4,fontSize:9}}, useMock ? 'Modo demo · datos de ejemplo' : 'Conectado a Supabase')
+    )
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REMINDER · Modal 24h
+═══════════════════════════════════════════════════════════════ */
+function Reminder({report:r, onYes, onLater, onMute}){
+  const t = TYPE_META[r.type];
+  const ageH = Math.floor((Date.now()-new Date(r.reported_at).getTime())/3600e3);
+  return e('div',{className:'sheet'},
+    e('div',{className:'sheet-inner',style:{borderColor:'rgba(101,8,31,.55)'}},
+      e('div',{className:'sheet-pill'}),
+      e('div',{style:{textAlign:'center'}},
+        e('div',{style:{width:54,height:54,background:r.type==='power'?'rgba(245,166,35,.18)':'rgba(11,168,196,.15)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',border:`2px solid ${r.type==='power'?'rgba(245,166,35,.35)':'rgba(11,168,196,.3)'}`,fontSize:22}}, t.emoji),
+        e('div',{style:{fontSize:10,fontWeight:700,letterSpacing:2,textTransform:'uppercase',color:'var(--gb)',marginBottom:6}}, 'Recordatorio'),
+        e('div',{className:'font-n',style:{fontWeight:900,fontSize:16,marginBottom:8}}, '¿Ya se resolvió ', r.type==='power'?'el apagón':'la fuga', '?'),
+        e('div',{style:{fontSize:12,color:'var(--gr5)',marginBottom:14}}, 'Tu reporte de hace ',e('strong',null,ageH,'h'),' en ',e('strong',null,r.zone||'Mérida')),
+        e('button',{className:'btn btn-suc',style:{width:'100%',marginBottom:8},onClick:onYes}, Ic.check(14,'#fff'),' Sí, ya se resolvió'),
+        e('button',{className:'btn btn-gh',style:{width:'100%',marginBottom:10},onClick:onLater}, '⏳ Aún no — recuérdame después'),
+        e('button',{onClick:onMute,style:{fontSize:10,color:'var(--gr3)'}}, 'No mostrar este recordatorio')
+      )
+    )
+  );
+}
+
+/* ── MOUNT ─────────────────────────────────────────────────── */
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
 </script>
 </body>
 </html>
