@@ -124,6 +124,26 @@ input:focus,textarea:focus{outline:1px solid var(--gb)}
 .fab:active{transform:scale(.95)}
 .fab-2{position:absolute;bottom:84px;right:24px;width:38px;height:38px;border-radius:50%;background:var(--d2);border:1px solid var(--gr2);display:flex;align-items:center;justify-content:center;z-index:400}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 24px;color:var(--gr4)}
+/* ── Hero / Brand ────────────────────────────────────────── */
+.wm{font-family:'Nunito',sans-serif;font-weight:800;letter-spacing:-.3px;line-height:1}
+.wm-sub{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.home-hero{position:relative;padding:24px 16px 18px;overflow:hidden;border-bottom:1px solid var(--gr1);background:var(--bk)}
+.home-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--gl) 1px,transparent 1px),linear-gradient(90deg,var(--gl) 1px,transparent 1px);background-size:36px 36px;opacity:.5;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 80%);mask-image:radial-gradient(ellipse at center,black 30%,transparent 80%)}
+.home-hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 35%,rgba(101,8,31,.32) 0%,transparent 70%);pointer-events:none}
+.home-hero-c{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.brand-big{font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;line-height:.95;letter-spacing:-.5px;margin:6px 0 2px}
+.brand-big .h1{color:var(--wh)}
+.brand-big .h2{background:linear-gradient(135deg,var(--gb),var(--g),var(--gd));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tag-up{font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--gr3)}
+.tag-tagline{font-size:13px;font-weight:300;color:var(--gr5);max-width:340px;line-height:1.55;margin-top:4px}
+.chips-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.h-chip{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gr3);border:1px solid var(--gr1);padding:5px 10px;border-radius:2px}
+.sparks{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.spark{position:absolute;border-radius:50%;animation:spk var(--dur,4s) ease-in-out infinite;opacity:0}
+/* Wordmark light variant (for future light mode) */
+.wm-light .h1{color:#1A0A12!important}
+.wm-light .h2{color:#666!important;font-weight:400}
+.wm-light .wm-sub{color:#999!important}
 .spinner{width:22px;height:22px;border:2px solid var(--gr2);border-top-color:var(--gb);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .report-photo{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--gr1)}
@@ -320,6 +340,42 @@ function AppIcon({size=32, glow=false}){
   );
 }
 
+/* ── Wordmark (manual v4 §02 · "Versión Principal") ───────── */
+function Wordmark({iconSize=22, fontSize=15, sub=null, light=false, gap=10}){
+  return e('div',{style:{display:'flex',alignItems:'center',gap}},
+    e(AppIcon,{size:iconSize}),
+    e('div',{className:`wm ${light?'wm-light':''}`,style:{fontSize}},
+      e('div',null,
+        e('span',{className:'h1',style:{color:light?'#1A0A12':'var(--wh)'}}, 'Apagones'),
+        e('span',{className:'h2',style:{color:light?'#666':'var(--gr4)',fontWeight:400}}, ' Mid')
+      ),
+      sub && e('div',{className:'wm-sub',style:{color:light?'#999':'var(--gr3)'}}, sub)
+    )
+  );
+}
+
+/* ── Sparks (chispitas del hero · manual v4) ──────────────── */
+function Sparks({count=14}){
+  const sparks = useMemo(()=>Array.from({length:count},()=>{
+    const guinda = Math.random() > .55;
+    const size = 2 + Math.random()*3;
+    return {
+      left: Math.random()*100, top: Math.random()*100, size,
+      color: guinda ? '#9B1035' : '#FFD700',
+      dur: 3 + Math.random()*4, delay: Math.random()*5,
+      tx: -25 + Math.random()*50, ty: -50 - Math.random()*60
+    };
+  }),[count]);
+  return e('div',{className:'sparks'},
+    sparks.map((s,i)=>e('div',{key:i,className:'spark',style:{
+      left:s.left+'%',top:s.top+'%',width:s.size,height:s.size,
+      background:s.color,boxShadow:`0 0 ${s.size*2}px ${s.color}`,
+      animationDuration:s.dur+'s',animationDelay:s.delay+'s',
+      '--tx':s.tx+'px','--ty':s.ty+'px'
+    }}))
+  );
+}
+
 /* ── SVG: APAGONCITO MASCOT (idéntico al manual v4 §08) ────── */
 function Apagoncito({size=180}){
   return e('svg',{width:size,height:size*(280/220),viewBox:'0 0 220 280',fill:'none'},
@@ -427,8 +483,7 @@ function App(){
   return e('div',{className:'app'},
     e(GlobalDefs),
     e('header',{className:'appbar'},
-      e('div',{className:'appbar-icon'}, e(AppIcon,{size:22})),
-      e('div',{className:'brand'}, e('span',{className:'p1'},'Apagones'), e('span',{className:'p2'},' Mid')),
+      e(Wordmark,{iconSize:24,fontSize:15,gap:9}),
       e('div',{style:{marginLeft:'auto',display:'flex',gap:6,alignItems:'center'}},
         e('span',{className:'counter apag'}, Ic.bolt(10,'currentColor'),' ',counts.power),
         e('span',{className:'counter agua'}, Ic.drop(10,'currentColor'),' ',counts.water)
@@ -504,13 +559,25 @@ function App(){
 ═══════════════════════════════════════════════════════════════ */
 function Home({reports, openReportFlow, setView, setDetail, loading}){
   const recent = reports.filter(r=>r.status==='active').slice(0,3);
-  return e('div',{style:{padding:'14px 16px 20px',display:'flex',flexDirection:'column',gap:14}},
-    e('div',{style:{display:'flex',justifyContent:'center',padding:'10px 0 0'}}, e('div',{className:'mascot-glow'}, e(Apagoncito,{size:130}))),
-    e('div',{style:{textAlign:'center'}},
-      e('div',{className:'font-n',style:{fontWeight:900,fontSize:22,marginBottom:4}}, '¿Sin luz o sin agua?'),
-      e('div',{style:{fontSize:12,color:'var(--gr4)'}}, 'Tu reporte es nuestra voz · Mérida en vivo')
+  return e('div',null,
+    e('section',{className:'home-hero'},
+      e(Sparks,{count:14}),
+      e('div',{className:'home-hero-c'},
+        e('div',{className:'mascot-glow'}, e(Apagoncito,{size:128})),
+        e('div',{className:'brand-big'},
+          e('span',{className:'h1'},'Apagones'),
+          e('span',{className:'h2'},'Mid')
+        ),
+        e('div',{className:'tag-up'},'Mérida en vivo · v1'),
+        e('p',{className:'tag-tagline'},'¿Sin luz o sin agua? Tu reporte es nuestra voz.'),
+        e('div',{className:'chips-row'},
+          e('span',{className:'h-chip'},'Mérida · Yucatán'),
+          e('span',{className:'h-chip'},useMock?'Modo demo':'En vivo')
+        )
+      )
     ),
-    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:4}},
+    e('div',{style:{padding:'18px 16px 22px',display:'flex',flexDirection:'column',gap:14}},
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
       e('button',{className:'card',style:{textAlign:'center',padding:'18px 12px'},onClick:()=>openReportFlow('power')},
         e('div',{style:{fontSize:28,color:'var(--amb)',marginBottom:6}}, '⚡'),
         e('div',{className:'font-n',style:{fontWeight:900,fontSize:14,color:'var(--amb)'}}, 'SIN LUZ'),
@@ -546,6 +613,7 @@ function Home({reports, openReportFlow, setView, setDetail, loading}){
                   SEV_META[r.severity]?.label||'—')
               ))
             )
+    )
     )
   );
 }
